@@ -12,7 +12,16 @@ import { cn } from "@/lib/utils";
 
 const DailyReport = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const selectedDateStr = selectedDate.toISOString().split('T')[0];
+  
+  // Format the selected date consistently as YYYY-MM-DD
+  const formatDateToString = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  
+  const selectedDateStr = formatDateToString(selectedDate);
   
   const lessons = JSON.parse(localStorage.getItem("lessonCompletions") || "[]");
   const users = [
@@ -21,7 +30,8 @@ const DailyReport = () => {
   ];
 
   console.log("=== DAILY REPORT DEBUG ===");
-  console.log("Selected date:", selectedDateStr);
+  console.log("Selected date object:", selectedDate);
+  console.log("Formatted selected date:", selectedDateStr);
   console.log("Total lessons in storage:", lessons.length);
   console.log("All lesson dates from storage:", lessons.map((l: any) => ({ id: l.id, date: l.date, dateType: typeof l.date })));
 
@@ -33,6 +43,7 @@ const DailyReport = () => {
   });
 
   console.log("Filtered lessons for selected date:", dayLessons.length);
+  console.log("Lessons found:", dayLessons);
   console.log("=== END DAILY REPORT DEBUG ===");
 
   const getTeacherName = (teacherId: number) => {
