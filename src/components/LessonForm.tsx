@@ -122,19 +122,17 @@ const LessonForm = ({ teacherId }: LessonFormProps) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="lessonNumber">
-                Lesson Number 
+                Lesson
                 {selectedSubject && (
                   <span className="text-sm text-gray-500"> (1-{selectedSubject.totalLessons})</span>
                 )}
               </Label>
               <Input
                 id="lessonNumber"
-                type="number"
-                min="1"
-                max={selectedSubject?.totalLessons || 20}
+                type="text"
                 value={formData.lessonNumber}
                 onChange={(e) => setFormData({...formData, lessonNumber: e.target.value})}
-                placeholder="Enter lesson number"
+                placeholder="Enter lesson"
                 required
               />
             </div>
