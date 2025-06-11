@@ -38,14 +38,14 @@ const LessonForm = ({ teacherId }: LessonFormProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation
-    const selectedSubject = subjects.find(s => s.name === formData.subject);
-    const lessonNum = parseInt(formData.lessonNumber);
-    
-    if (selectedSubject && (lessonNum < 1 || lessonNum > selectedSubject.totalLessons)) {
+    console.log("Form submitted with data:", formData);
+    console.log("Teacher ID:", teacherId);
+
+    // Basic validation - just check required fields
+    if (!formData.class || !formData.subject || !formData.lessonNumber || !formData.date) {
       toast({
-        title: "Invalid Lesson Number",
-        description: `Lesson number must be between 1 and ${selectedSubject.totalLessons} for ${formData.subject}`,
+        title: "Missing Information",
+        description: "Please fill in all required fields",
         variant: "destructive",
       });
       return;
@@ -56,13 +56,20 @@ const LessonForm = ({ teacherId }: LessonFormProps) => {
     const newEntry = {
       id: Date.now(),
       teacherId,
-      ...formData,
-      lessonNumber: lessonNum,
+      class: formData.class,
+      subject: formData.subject,
+      lessonNumber: formData.lessonNumber, // Store as text, no parsing
+      date: formData.date,
+      completed: formData.completed,
+      assessment: formData.assessment,
       submittedAt: new Date().toISOString()
     };
     
     existingData.push(newEntry);
     localStorage.setItem("lessonCompletions", JSON.stringify(existingData));
+
+    console.log("Data saved to localStorage:", newEntry);
+    console.log("All lesson completions:", existingData);
 
     toast({
       title: "Lesson Submitted",
