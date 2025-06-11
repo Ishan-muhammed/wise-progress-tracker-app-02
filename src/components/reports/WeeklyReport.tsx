@@ -9,17 +9,28 @@ const WeeklyReport = () => {
     { id: 2, name: "Fatima Ali" }
   ];
 
-  // Get current week's lessons
+  // Get current week's lessons - fix date calculation bug
   const now = new Date();
-  const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
-  const weekEnd = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - now.getDay());
+  weekStart.setHours(0, 0, 0, 0);
+  
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+  weekEnd.setHours(23, 59, 59, 999);
   
   const weekStartStr = weekStart.toISOString().split('T')[0];
   const weekEndStr = weekEnd.toISOString().split('T')[0];
 
-  const weekLessons = lessons.filter((lesson: any) => 
-    lesson.date >= weekStartStr && lesson.date <= weekEndStr
-  );
+  console.log("Weekly Report - Date range:", weekStartStr, "to", weekEndStr);
+  console.log("Weekly Report - All lessons:", lessons);
+
+  const weekLessons = lessons.filter((lesson: any) => {
+    console.log("Checking lesson date:", lesson.date, "against range:", weekStartStr, "-", weekEndStr);
+    return lesson.date >= weekStartStr && lesson.date <= weekEndStr;
+  });
+
+  console.log("Weekly Report - Filtered lessons:", weekLessons);
 
   // Summary by teacher
   const teacherSummary = users.map(teacher => {

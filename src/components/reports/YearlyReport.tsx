@@ -19,9 +19,16 @@ const YearlyReport = () => {
   
   // Get current year's lessons
   const currentYear = new Date().getFullYear();
-  const yearLessons = lessons.filter((lesson: any) => 
-    new Date(lesson.date).getFullYear() === currentYear && lesson.completed
-  );
+  console.log("Yearly Report - Current year:", currentYear);
+  console.log("Yearly Report - All lessons:", lessons);
+
+  const yearLessons = lessons.filter((lesson: any) => {
+    const lessonYear = new Date(lesson.date).getFullYear();
+    console.log("Checking lesson year:", lessonYear, "against current year:", currentYear);
+    return lessonYear === currentYear && lesson.completed;
+  });
+
+  console.log("Yearly Report - This year's completed lessons:", yearLessons);
 
   // Calculate summary for each class and subject
   const summary: any = [];

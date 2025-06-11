@@ -13,9 +13,16 @@ const MonthlyReport = () => {
   const monthStartStr = monthStart.toISOString().split('T')[0];
   const monthEndStr = monthEnd.toISOString().split('T')[0];
 
-  const monthLessons = lessons.filter((lesson: any) => 
-    lesson.date >= monthStartStr && lesson.date <= monthEndStr && lesson.completed
-  );
+  console.log("Monthly Report - Date range:", monthStartStr, "to", monthEndStr);
+  console.log("Monthly Report - All lessons:", lessons);
+
+  // Show ALL lessons in the month, not just completed ones
+  const monthLessons = lessons.filter((lesson: any) => {
+    console.log("Checking lesson date:", lesson.date, "against range:", monthStartStr, "-", monthEndStr);
+    return lesson.date >= monthStartStr && lesson.date <= monthEndStr;
+  });
+
+  console.log("Monthly Report - Filtered lessons:", monthLessons);
 
   // Summary by class and subject
   const summary: any = {};
@@ -25,10 +32,12 @@ const MonthlyReport = () => {
       summary[key] = {
         class: lesson.class,
         subject: lesson.subject,
-        completed: 0
+        completed: 0,
+        total: 0
       };
     }
-    summary[key].completed++;
+    summary[key].total++;
+    if (lesson.completed) summary[key].completed++;
   });
 
   if (Object.keys(summary).length === 0) {
@@ -39,7 +48,7 @@ const MonthlyReport = () => {
         </CardHeader>
         <CardContent>
           <p className="text-center text-muted-foreground py-8">
-            No completed lessons recorded for this month.
+            No lessons recorded for this month.
           </p>
         </CardContent>
       </Card>
@@ -57,7 +66,8 @@ const MonthlyReport = () => {
             <TableRow>
               <TableHead>Class</TableHead>
               <TableHead>Subject</TableHead>
-              <TableHead>Lessons Completed</TableHead>
+              <TableHead>Total Lessons</TableHead>
+              <TableHead>Completed</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -65,6 +75,7 @@ const MonthlyReport = () => {
               <TableRow key={index}>
                 <TableCell>Class {item.class}</TableCell>
                 <TableCell>{item.subject}</TableCell>
+                <TableCell>{item.total}</TableCell>
                 <TableCell>{item.completed}</TableCell>
               </TableRow>
             ))}

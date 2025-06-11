@@ -11,7 +11,15 @@ const DailyReport = () => {
     { id: 2, name: "Fatima Ali" }
   ];
 
-  const todayLessons = lessons.filter((lesson: any) => lesson.date === today);
+  console.log("Daily Report - Today's date:", today);
+  console.log("Daily Report - All lessons:", lessons);
+
+  const todayLessons = lessons.filter((lesson: any) => {
+    console.log("Checking lesson date:", lesson.date, "against today:", today);
+    return lesson.date === today;
+  });
+
+  console.log("Daily Report - Today's lessons:", todayLessons);
 
   const getTeacherName = (teacherId: number) => {
     const teacher = users.find(u => u.id === teacherId);
