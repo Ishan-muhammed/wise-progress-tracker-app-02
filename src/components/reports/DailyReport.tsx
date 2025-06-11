@@ -157,17 +157,9 @@ const DailyReport = () => {
       </CardHeader>
       <CardContent>
         {dayLessons.length === 0 ? (
-          <div>
-            <p className="text-center text-muted-foreground py-8">
-              No lessons recorded for {format(selectedDate, "M/d/yyyy")}.
-            </p>
-            <div className="mt-4 p-4 bg-gray-50 rounded text-sm">
-              <p><strong>Debug Info:</strong></p>
-              <p>Looking for date: {selectedDateStr}</p>
-              <p>Total lessons: {lessons.length}</p>
-              <p>Lesson dates: {lessons.map((l: any) => l.date).join(', ')}</p>
-            </div>
-          </div>
+          <p className="text-center text-muted-foreground py-8">
+            No lessons recorded for {format(selectedDate, "M/d/yyyy")}.
+          </p>
         ) : (
           <Table>
             <TableHeader>
