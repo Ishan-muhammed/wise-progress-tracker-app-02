@@ -35,10 +35,21 @@ const DailyReport = () => {
   console.log("Total lessons in storage:", lessons.length);
   console.log("All lesson dates from storage:", lessons.map((l: any) => ({ id: l.id, date: l.date, dateType: typeof l.date })));
 
+  // Fixed filtering logic - ensure exact date match
   const dayLessons = lessons.filter((lesson: any) => {
     const lessonDate = lesson.date;
-    const matches = lessonDate === selectedDateStr;
-    console.log(`Lesson ${lesson.id}: date="${lessonDate}" vs selected="${selectedDateStr}" -> matches: ${matches}`);
+    
+    // Ensure both dates are in the same format for comparison
+    let normalizedLessonDate = lessonDate;
+    if (lessonDate && typeof lessonDate === 'string') {
+      // If lesson date is already a string, ensure it's in YYYY-MM-DD format
+      if (lessonDate.includes('T')) {
+        normalizedLessonDate = lessonDate.split('T')[0];
+      }
+    }
+    
+    const matches = normalizedLessonDate === selectedDateStr;
+    console.log(`Lesson ${lesson.id}: original="${lessonDate}" normalized="${normalizedLessonDate}" vs selected="${selectedDateStr}" -> matches: ${matches}`);
     return matches;
   });
 
@@ -55,7 +66,7 @@ const DailyReport = () => {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Daily Report - {selectedDate.toLocaleDateString()}</CardTitle>
+          <CardTitle>Daily Report - {format(selectedDate, "M/d/yyyy")}</CardTitle>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -85,7 +96,7 @@ const DailyReport = () => {
         {dayLessons.length === 0 ? (
           <div>
             <p className="text-center text-muted-foreground py-8">
-              No lessons recorded for {selectedDate.toLocaleDateString()}.
+              No lessons recorded for {format(selectedDate, "M/d/yyyy")}.
             </p>
             <div className="mt-4 p-4 bg-gray-50 rounded text-sm">
               <p><strong>Debug Info:</strong></p>
