@@ -35,22 +35,39 @@ const DailyReport = () => {
   console.log("Total lessons in storage:", lessons.length);
   console.log("All lesson dates from storage:", lessons.map((l: any) => ({ id: l.id, date: l.date, dateType: typeof l.date })));
 
-  // Fixed filtering logic - ensure exact date match
+  // Completely rewritten filtering logic for exact date matching
   const dayLessons = lessons.filter((lesson: any) => {
-    const lessonDate = lesson.date;
+    if (!lesson.date) {
+      console.log(`Lesson ${lesson.id}: No date found`);
+      return false;
+    }
     
-    // Ensure both dates are in the same format for comparison
-    let normalizedLessonDate = lessonDate;
-    if (lessonDate && typeof lessonDate === 'string') {
-      // If lesson date is already a string, ensure it's in YYYY-MM-DD format
-      if (lessonDate.includes('T')) {
-        normalizedLessonDate = lessonDate.split('T')[0];
+    let lessonDateStr = lesson.date;
+    
+    // Handle different date formats
+    if (typeof lessonDateStr === 'string') {
+      // If it's an ISO string with time, extract just the date part
+      if (lessonDateStr.includes('T')) {
+        lessonDateStr = lessonDateStr.split('T')[0];
+      }
+      // If it's already in YYYY-MM-DD format, use as is
+      // If it's in another format, try to normalize it
+      if (lessonDateStr.includes('/')) {
+        // Convert M/D/YYYY to YYYY-MM-DD
+        const parts = lessonDateStr.split('/');
+        if (parts.length === 3) {
+          const month = parts[0].padStart(2, '0');
+          const day = parts[1].padStart(2, '0');
+          const year = parts[2];
+          lessonDateStr = `${year}-${month}-${day}`;
+        }
       }
     }
     
-    const matches = normalizedLessonDate === selectedDateStr;
-    console.log(`Lesson ${lesson.id}: original="${lessonDate}" normalized="${normalizedLessonDate}" vs selected="${selectedDateStr}" -> matches: ${matches}`);
-    return matches;
+    const isExactMatch = lessonDateStr === selectedDateStr;
+    console.log(`Lesson ${lesson.id}: original="${lesson.date}" normalized="${lessonDateStr}" vs selected="${selectedDateStr}" -> exact match: ${isExactMatch}`);
+    
+    return isExactMatch;
   });
 
   console.log("Filtered lessons for selected date:", dayLessons.length);
