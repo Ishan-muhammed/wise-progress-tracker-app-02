@@ -1,10 +1,19 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const DailyReport = () => {
-  const today = new Date().toISOString().split('T')[0];
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const selectedDateStr = selectedDate.toISOString().split('T')[0];
+  
   const lessons = JSON.parse(localStorage.getItem("lessonCompletions") || "[]");
   const users = [
     { id: 1, name: "Ahmad Hassan" },
@@ -12,18 +21,18 @@ const DailyReport = () => {
   ];
 
   console.log("=== DAILY REPORT DEBUG ===");
-  console.log("Today's date (expected format):", today);
+  console.log("Selected date:", selectedDateStr);
   console.log("Total lessons in storage:", lessons.length);
   console.log("All lesson dates from storage:", lessons.map((l: any) => ({ id: l.id, date: l.date, dateType: typeof l.date })));
 
-  const todayLessons = lessons.filter((lesson: any) => {
+  const dayLessons = lessons.filter((lesson: any) => {
     const lessonDate = lesson.date;
-    const matches = lessonDate === today;
-    console.log(`Lesson ${lesson.id}: date="${lessonDate}" vs today="${today}" -> matches: ${matches}`);
+    const matches = lessonDate === selectedDateStr;
+    console.log(`Lesson ${lesson.id}: date="${lessonDate}" vs selected="${selectedDateStr}" -> matches: ${matches}`);
     return matches;
   });
 
-  console.log("Filtered lessons for today:", todayLessons.length);
+  console.log("Filtered lessons for selected date:", dayLessons.length);
   console.log("=== END DAILY REPORT DEBUG ===");
 
   const getTeacherName = (teacherId: number) => {
@@ -31,63 +40,81 @@ const DailyReport = () => {
     return teacher ? teacher.name : "Unknown Teacher";
   };
 
-  if (todayLessons.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Daily Report - {new Date().toLocaleDateString()}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-center text-muted-foreground py-8">
-            No lessons recorded for today.
-          </p>
-          <div className="mt-4 p-4 bg-gray-50 rounded text-sm">
-            <p><strong>Debug Info:</strong></p>
-            <p>Looking for date: {today}</p>
-            <p>Total lessons: {lessons.length}</p>
-            <p>Lesson dates: {lessons.map((l: any) => l.date).join(', ')}</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Daily Report - {new Date().toLocaleDateString()}</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Daily Report - {selectedDate.toLocaleDateString()}</CardTitle>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-[240px] justify-start text-left font-normal",
+                  "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {format(selectedDate, "PPP")}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => date && setSelectedDate(date)}
+                initialFocus
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Class</TableHead>
-              <TableHead>Subject</TableHead>
-              <TableHead>Lesson #</TableHead>
-              <TableHead>Teacher</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Assessment Notes</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {todayLessons.map((lesson: any) => (
-              <TableRow key={lesson.id}>
-                <TableCell>Class {lesson.class}</TableCell>
-                <TableCell>{lesson.subject}</TableCell>
-                <TableCell>{lesson.lessonNumber}</TableCell>
-                <TableCell>{getTeacherName(lesson.teacherId)}</TableCell>
-                <TableCell>
-                  <Badge variant={lesson.completed ? "default" : "secondary"}>
-                    {lesson.completed ? "Completed" : "Not Completed"}
-                  </Badge>
-                </TableCell>
-                <TableCell className="max-w-xs truncate">
-                  {lesson.assessment || "No notes"}
-                </TableCell>
+        {dayLessons.length === 0 ? (
+          <div>
+            <p className="text-center text-muted-foreground py-8">
+              No lessons recorded for {selectedDate.toLocaleDateString()}.
+            </p>
+            <div className="mt-4 p-4 bg-gray-50 rounded text-sm">
+              <p><strong>Debug Info:</strong></p>
+              <p>Looking for date: {selectedDateStr}</p>
+              <p>Total lessons: {lessons.length}</p>
+              <p>Lesson dates: {lessons.map((l: any) => l.date).join(', ')}</p>
+            </div>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Class</TableHead>
+                <TableHead>Subject</TableHead>
+                <TableHead>Lesson #</TableHead>
+                <TableHead>Teacher</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Assessment Notes</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {dayLessons.map((lesson: any) => (
+                <TableRow key={lesson.id}>
+                  <TableCell>Class {lesson.class}</TableCell>
+                  <TableCell>{lesson.subject}</TableCell>
+                  <TableCell>{lesson.lessonNumber}</TableCell>
+                  <TableCell>{getTeacherName(lesson.teacherId)}</TableCell>
+                  <TableCell>
+                    <Badge variant={lesson.completed ? "default" : "secondary"}>
+                      {lesson.completed ? "Completed" : "Not Completed"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="max-w-xs truncate">
+                    {lesson.assessment || "No notes"}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </CardContent>
     </Card>
   );
