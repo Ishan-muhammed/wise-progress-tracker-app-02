@@ -29,12 +29,14 @@ const TeacherDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header user={user} />
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Teacher Dashboard</h1>
-          <p className="text-gray-600">Submit lesson data and track your progress</p>
+      <main className="flex justify-center items-start py-6 px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-2xl">
+          <div className="mb-6 text-center">
+            <h1 className="text-3xl font-bold text-gray-900">Teacher Dashboard</h1>
+            <p className="text-gray-600">Submit lesson data and track your progress</p>
+          </div>
+          <LessonForm teacherId={user.id} />
         </div>
-        <LessonForm teacherId={user.id} />
       </main>
     </div>
   );
