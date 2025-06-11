@@ -9,7 +9,7 @@ const WeeklyReport = () => {
     { id: 2, name: "Fatima Ali" }
   ];
 
-  // Get current week's lessons - fix date calculation bug
+  // Get current week's lessons - fix date calculation
   const now = new Date();
   const weekStart = new Date(now);
   weekStart.setDate(now.getDate() - now.getDay());
@@ -22,15 +22,21 @@ const WeeklyReport = () => {
   const weekStartStr = weekStart.toISOString().split('T')[0];
   const weekEndStr = weekEnd.toISOString().split('T')[0];
 
-  console.log("Weekly Report - Date range:", weekStartStr, "to", weekEndStr);
-  console.log("Weekly Report - All lessons:", lessons);
+  console.log("=== WEEKLY REPORT DEBUG ===");
+  console.log("Week start date:", weekStartStr);
+  console.log("Week end date:", weekEndStr);
+  console.log("Total lessons in storage:", lessons.length);
+  console.log("All lesson dates:", lessons.map((l: any) => l.date));
 
   const weekLessons = lessons.filter((lesson: any) => {
-    console.log("Checking lesson date:", lesson.date, "against range:", weekStartStr, "-", weekEndStr);
-    return lesson.date >= weekStartStr && lesson.date <= weekEndStr;
+    const lessonDate = lesson.date;
+    const isInRange = lessonDate >= weekStartStr && lessonDate <= weekEndStr;
+    console.log(`Lesson ${lesson.id}: date="${lessonDate}" in range [${weekStartStr} to ${weekEndStr}] -> ${isInRange}`);
+    return isInRange;
   });
 
-  console.log("Weekly Report - Filtered lessons:", weekLessons);
+  console.log("Filtered lessons for this week:", weekLessons.length);
+  console.log("=== END WEEKLY REPORT DEBUG ===");
 
   // Summary by teacher
   const teacherSummary = users.map(teacher => {
@@ -68,6 +74,12 @@ const WeeklyReport = () => {
           <p className="text-center text-muted-foreground py-8">
             No lessons recorded for this week.
           </p>
+          <div className="mt-4 p-4 bg-gray-50 rounded text-sm">
+            <p><strong>Debug Info:</strong></p>
+            <p>Week range: {weekStartStr} to {weekEndStr}</p>
+            <p>Total lessons: {lessons.length}</p>
+            <p>Lesson dates: {lessons.map((l: any) => l.date).join(', ')}</p>
+          </div>
         </CardContent>
       </Card>
     );

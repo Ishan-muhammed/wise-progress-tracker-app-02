@@ -38,8 +38,11 @@ const LessonForm = ({ teacherId }: LessonFormProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log("=== LESSON FORM SUBMISSION DEBUG ===");
     console.log("Form submitted with data:", formData);
     console.log("Teacher ID:", teacherId);
+    console.log("Date being saved:", formData.date);
+    console.log("Date type:", typeof formData.date);
 
     // Basic validation - just check required fields
     if (!formData.class || !formData.subject || !formData.lessonNumber || !formData.date) {
@@ -58,8 +61,8 @@ const LessonForm = ({ teacherId }: LessonFormProps) => {
       teacherId,
       class: formData.class,
       subject: formData.subject,
-      lessonNumber: formData.lessonNumber, // Store as text, no parsing
-      date: formData.date,
+      lessonNumber: formData.lessonNumber,
+      date: formData.date, // This should be in YYYY-MM-DD format from the date input
       completed: formData.completed,
       assessment: formData.assessment,
       submittedAt: new Date().toISOString()
@@ -70,6 +73,7 @@ const LessonForm = ({ teacherId }: LessonFormProps) => {
 
     console.log("Data saved to localStorage:", newEntry);
     console.log("All lesson completions:", existingData);
+    console.log("=== END LESSON FORM SUBMISSION DEBUG ===");
 
     toast({
       title: "Lesson Submitted",

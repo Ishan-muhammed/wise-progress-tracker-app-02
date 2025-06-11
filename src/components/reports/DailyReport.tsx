@@ -11,15 +11,20 @@ const DailyReport = () => {
     { id: 2, name: "Fatima Ali" }
   ];
 
-  console.log("Daily Report - Today's date:", today);
-  console.log("Daily Report - All lessons:", lessons);
+  console.log("=== DAILY REPORT DEBUG ===");
+  console.log("Today's date (expected format):", today);
+  console.log("Total lessons in storage:", lessons.length);
+  console.log("All lesson dates from storage:", lessons.map((l: any) => ({ id: l.id, date: l.date, dateType: typeof l.date })));
 
   const todayLessons = lessons.filter((lesson: any) => {
-    console.log("Checking lesson date:", lesson.date, "against today:", today);
-    return lesson.date === today;
+    const lessonDate = lesson.date;
+    const matches = lessonDate === today;
+    console.log(`Lesson ${lesson.id}: date="${lessonDate}" vs today="${today}" -> matches: ${matches}`);
+    return matches;
   });
 
-  console.log("Daily Report - Today's lessons:", todayLessons);
+  console.log("Filtered lessons for today:", todayLessons.length);
+  console.log("=== END DAILY REPORT DEBUG ===");
 
   const getTeacherName = (teacherId: number) => {
     const teacher = users.find(u => u.id === teacherId);
@@ -36,6 +41,12 @@ const DailyReport = () => {
           <p className="text-center text-muted-foreground py-8">
             No lessons recorded for today.
           </p>
+          <div className="mt-4 p-4 bg-gray-50 rounded text-sm">
+            <p><strong>Debug Info:</strong></p>
+            <p>Looking for date: {today}</p>
+            <p>Total lessons: {lessons.length}</p>
+            <p>Lesson dates: {lessons.map((l: any) => l.date).join(', ')}</p>
+          </div>
         </CardContent>
       </Card>
     );
