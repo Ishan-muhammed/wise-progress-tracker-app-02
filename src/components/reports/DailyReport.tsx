@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +21,50 @@ const DailyReport = () => {
   };
   
   const selectedDateStr = formatDateToString(selectedDate);
+  
+  // Clean up old data on component mount
+  useEffect(() => {
+    const lessons = JSON.parse(localStorage.getItem("lessonCompletions") || "[]");
+    const cutoffDate = "2025-06-11";
+    
+    const filteredLessons = lessons.filter((lesson: any) => {
+      if (!lesson.date) return false;
+      
+      let lessonDateStr = lesson.date;
+      
+      // Normalize date format to YYYY-MM-DD
+      if (typeof lessonDateStr === 'string') {
+        if (lessonDateStr.includes('T')) {
+          lessonDateStr = lessonDateStr.split('T')[0];
+        }
+        else if (lessonDateStr.includes('/')) {
+          const parts = lessonDateStr.split('/');
+          if (parts.length === 3) {
+            const month = parts[0].padStart(2, '0');
+            const day = parts[1].padStart(2, '0');
+            const year = parts[2];
+            lessonDateStr = `${year}-${month}-${day}`;
+          }
+        }
+        else if (lessonDateStr.includes('-') && lessonDateStr.length === 10) {
+          const parts = lessonDateStr.split('-');
+          if (parts.length === 3 && parts[0].length === 2) {
+            const month = parts[0];
+            const day = parts[1];
+            const year = parts[2];
+            lessonDateStr = `${year}-${month}-${day}`;
+          }
+        }
+      }
+      
+      return lessonDateStr >= cutoffDate;
+    });
+    
+    // Only update if we actually removed some lessons
+    if (filteredLessons.length !== lessons.length) {
+      localStorage.setItem("lessonCompletions", JSON.stringify(filteredLessons));
+    }
+  }, []);
   
   const lessons = JSON.parse(localStorage.getItem("lessonCompletions") || "[]");
   const users = [
@@ -53,7 +96,7 @@ const DailyReport = () => {
     });
     
     localStorage.setItem("lessonCompletions", JSON.stringify(updatedLessons));
-    window.location.reload(); // Refresh to show updated data
+    window.location.reload();
   };
 
   console.log("=== DAILY REPORT DEBUG ===");
