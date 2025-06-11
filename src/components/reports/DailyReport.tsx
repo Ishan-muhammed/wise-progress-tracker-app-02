@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -29,13 +29,40 @@ const DailyReport = () => {
     { id: 2, name: "Fatima Ali" }
   ];
 
+  // Function to clear data for a specific date
+  const clearDataForDate = (dateStr: string) => {
+    const updatedLessons = lessons.filter((lesson: any) => {
+      let lessonDateStr = lesson.date;
+      
+      if (typeof lessonDateStr === 'string') {
+        if (lessonDateStr.includes('T')) {
+          lessonDateStr = lessonDateStr.split('T')[0];
+        }
+        if (lessonDateStr.includes('/')) {
+          const parts = lessonDateStr.split('/');
+          if (parts.length === 3) {
+            const month = parts[0].padStart(2, '0');
+            const day = parts[1].padStart(2, '0');
+            const year = parts[2];
+            lessonDateStr = `${year}-${month}-${day}`;
+          }
+        }
+      }
+      
+      return lessonDateStr !== dateStr;
+    });
+    
+    localStorage.setItem("lessonCompletions", JSON.stringify(updatedLessons));
+    window.location.reload(); // Refresh to show updated data
+  };
+
   console.log("=== DAILY REPORT DEBUG ===");
   console.log("Selected date object:", selectedDate);
   console.log("Formatted selected date:", selectedDateStr);
   console.log("Total lessons in storage:", lessons.length);
   console.log("All lesson dates from storage:", lessons.map((l: any) => ({ id: l.id, date: l.date, dateType: typeof l.date })));
 
-  // Completely rewritten filtering logic for exact date matching
+  // Improved filtering logic with strict date matching
   const dayLessons = lessons.filter((lesson: any) => {
     if (!lesson.date) {
       console.log(`Lesson ${lesson.id}: No date found`);
@@ -44,20 +71,28 @@ const DailyReport = () => {
     
     let lessonDateStr = lesson.date;
     
-    // Handle different date formats
+    // Handle different date formats and normalize to YYYY-MM-DD
     if (typeof lessonDateStr === 'string') {
       // If it's an ISO string with time, extract just the date part
       if (lessonDateStr.includes('T')) {
         lessonDateStr = lessonDateStr.split('T')[0];
       }
-      // If it's already in YYYY-MM-DD format, use as is
-      // If it's in another format, try to normalize it
-      if (lessonDateStr.includes('/')) {
-        // Convert M/D/YYYY to YYYY-MM-DD
+      // Convert M/D/YYYY to YYYY-MM-DD
+      else if (lessonDateStr.includes('/')) {
         const parts = lessonDateStr.split('/');
         if (parts.length === 3) {
           const month = parts[0].padStart(2, '0');
           const day = parts[1].padStart(2, '0');
+          const year = parts[2];
+          lessonDateStr = `${year}-${month}-${day}`;
+        }
+      }
+      // Convert MM-DD-YYYY to YYYY-MM-DD
+      else if (lessonDateStr.includes('-') && lessonDateStr.length === 10) {
+        const parts = lessonDateStr.split('-');
+        if (parts.length === 3 && parts[0].length === 2) {
+          const month = parts[0];
+          const day = parts[1];
           const year = parts[2];
           lessonDateStr = `${year}-${month}-${day}`;
         }
@@ -84,29 +119,40 @@ const DailyReport = () => {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Daily Report - {format(selectedDate, "M/d/yyyy")}</CardTitle>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-[240px] justify-start text-left font-normal",
-                  "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {format(selectedDate, "PPP")}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => date && setSelectedDate(date)}
-                initialFocus
-                className="p-3 pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => clearDataForDate(selectedDateStr)}
+              className="text-red-600 hover:text-red-700"
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Clear Data
+            </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[240px] justify-start text-left font-normal",
+                    "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {format(selectedDate, "PPP")}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
