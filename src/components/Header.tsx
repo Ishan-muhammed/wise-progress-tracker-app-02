@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +33,7 @@ const Header = () => {
           .eq('id', user.id)
           .single();
         
+        console.log('User profile data:', data); // Debug log
         if (data) {
           setProfile(data);
         }
@@ -73,6 +73,8 @@ const Header = () => {
     return null;
   }
 
+  console.log('Current profile role:', profile.role); // Debug log
+
   return (
     <header className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -90,14 +92,14 @@ const Header = () => {
                     <span className="ml-2">Menu</span>
                   </MenubarTrigger>
                   <MenubarContent>
-                    {profile.role === "admin" && (
-                      <MenubarItem onClick={handleTeacherDashboard}>
-                        Teacher Dashboard
-                      </MenubarItem>
-                    )}
                     {profile.role === "teacher" && (
                       <MenubarItem onClick={handleAdminDashboard}>
                         Admin Dashboard
+                      </MenubarItem>
+                    )}
+                    {profile.role === "admin" && (
+                      <MenubarItem onClick={handleTeacherDashboard}>
+                        Teacher Dashboard
                       </MenubarItem>
                     )}
                   </MenubarContent>
