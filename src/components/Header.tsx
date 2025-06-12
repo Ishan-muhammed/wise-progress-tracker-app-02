@@ -90,14 +90,14 @@ const Header = () => {
                     <span className="ml-2">Menu</span>
                   </MenubarTrigger>
                   <MenubarContent>
-                    {profile.role === "teacher" && (
-                      <MenubarItem onClick={handleAdminDashboard}>
-                        Admin Dashboard
-                      </MenubarItem>
-                    )}
                     {profile.role === "admin" && (
                       <MenubarItem onClick={handleTeacherDashboard}>
                         Teacher Dashboard
+                      </MenubarItem>
+                    )}
+                    {profile.role === "teacher" && (
+                      <MenubarItem onClick={handleAdminDashboard}>
+                        Admin Dashboard
                       </MenubarItem>
                     )}
                   </MenubarContent>
