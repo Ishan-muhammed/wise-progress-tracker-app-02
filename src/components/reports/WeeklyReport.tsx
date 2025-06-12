@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateToString } from "@/utils/dateUtils";
@@ -79,11 +78,13 @@ const WeeklyReport = () => {
   // Summary by class and subject (filtered by selected class)
   const classSummary: any = {};
   weekLessons.forEach((lesson: any) => {
-    const key = `${lesson.class}-${lesson.subject}`;
+    const teacher = users.find(u => u.id === lesson.teacherId);
+    const key = `${lesson.class}-${lesson.subject}-${lesson.teacherId}`;
     if (!classSummary[key]) {
       classSummary[key] = {
         class: lesson.class,
         subject: lesson.subject,
+        teacher: teacher ? teacher.name : 'Unknown',
         completed: 0,
         total: 0
       };

@@ -13,6 +13,7 @@ interface ClassSummary {
   subject: string;
   completed: number;
   total: number;
+  teacher: string;
 }
 
 interface WeeklyReportContentProps {

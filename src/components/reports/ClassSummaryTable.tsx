@@ -6,6 +6,7 @@ interface ClassSummary {
   subject: string;
   completed: number;
   total: number;
+  teacher: string;
 }
 
 interface ClassSummaryTableProps {
@@ -21,6 +22,7 @@ const ClassSummaryTable = ({ classSummary }: ClassSummaryTableProps) => {
           <TableRow>
             <TableHead>Class</TableHead>
             <TableHead>Subject</TableHead>
+            <TableHead>Teacher</TableHead>
             <TableHead>Total Lessons</TableHead>
           </TableRow>
         </TableHeader>
@@ -29,6 +31,7 @@ const ClassSummaryTable = ({ classSummary }: ClassSummaryTableProps) => {
             <TableRow key={index}>
               <TableCell>Class {summary.class}</TableCell>
               <TableCell>{summary.subject}</TableCell>
+              <TableCell>{summary.teacher}</TableCell>
               <TableCell>{summary.total}</TableCell>
             </TableRow>
           ))}
