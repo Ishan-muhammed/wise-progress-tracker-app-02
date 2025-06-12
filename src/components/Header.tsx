@@ -2,6 +2,9 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 import {
   Menubar,
   MenubarContent,
@@ -11,24 +14,51 @@ import {
 } from "@/components/ui/menubar";
 import { Menu } from "lucide-react";
 
-interface HeaderProps {
-  user: {
-    name: string;
-    role: string;
-  };
+interface Profile {
+  name: string;
+  role: string;
 }
 
-const Header = ({ user }: HeaderProps) => {
+const Header = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<Profile | null>(null);
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out.",
-    });
-    navigate("/");
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('name, role')
+          .eq('id', user.id)
+          .single();
+        
+        if (data) {
+          setProfile(data);
+        }
+      }
+    };
+
+    fetchProfile();
+  }, [user]);
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to log out",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+      navigate("/");
+    }
   };
 
   const handleAdminDashboard = () => {
@@ -39,6 +69,10 @@ const Header = ({ user }: HeaderProps) => {
     navigate("/teacher-dashboard");
   };
 
+  if (!profile) {
+    return null;
+  }
+
   return (
     <header className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -48,7 +82,7 @@ const Header = ({ user }: HeaderProps) => {
             <span className="text-gray-600">Islamic Studies Progress Tracking</span>
           </div>
           <div className="flex items-center space-x-4">
-            {(user.role === "teacher" || user.role === "admin") && (
+            {(profile.role === "teacher" || profile.role === "admin") && (
               <Menubar>
                 <MenubarMenu>
                   <MenubarTrigger className="cursor-pointer">
@@ -56,12 +90,12 @@ const Header = ({ user }: HeaderProps) => {
                     <span className="ml-2">Menu</span>
                   </MenubarTrigger>
                   <MenubarContent>
-                    {user.role === "teacher" && (
+                    {profile.role === "teacher" && (
                       <MenubarItem onClick={handleAdminDashboard}>
                         Admin Dashboard
                       </MenubarItem>
                     )}
-                    {user.role === "admin" && (
+                    {profile.role === "admin" && (
                       <MenubarItem onClick={handleTeacherDashboard}>
                         Teacher Dashboard
                       </MenubarItem>
@@ -71,7 +105,7 @@ const Header = ({ user }: HeaderProps) => {
               </Menubar>
             )}
             <span className="text-sm text-gray-600">
-              Welcome, {user.name} ({user.role})
+              Welcome, {profile.name} ({profile.role})
             </span>
             <Button variant="outline" onClick={handleLogout}>
               Logout

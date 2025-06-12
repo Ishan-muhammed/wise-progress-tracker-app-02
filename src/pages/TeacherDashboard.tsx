@@ -1,26 +1,10 @@
 
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import LessonForm from "@/components/LessonForm";
 
 const TeacherDashboard = () => {
-  const [user, setUser] = useState(null);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      const parsedUser = JSON.parse(userData);
-      if (parsedUser.role !== "teacher") {
-        navigate("/");
-        return;
-      }
-      setUser(parsedUser);
-    } else {
-      navigate("/");
-    }
-  }, [navigate]);
+  const { user } = useAuth();
 
   if (!user) {
     return <div>Loading...</div>;
@@ -28,7 +12,7 @@ const TeacherDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header user={user} />
+      <Header />
       <main className="flex justify-center items-start py-6 px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-2xl">
           <div className="mb-6 text-center">
