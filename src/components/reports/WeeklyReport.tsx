@@ -15,8 +15,8 @@ const WeeklyReport = () => {
   ];
 
   // Get unique classes from lessons and sort them in ascending order
-  const allClasses = [...new Set(lessons.map((lesson: any) => String(lesson.class)))]
-    .sort((a, b) => {
+  const allClasses: string[] = [...new Set(lessons.map((lesson: any) => String(lesson.class)))]
+    .sort((a: string, b: string) => {
       // Convert to numbers for proper numerical sorting
       const numA = parseInt(a);
       const numB = parseInt(b);
@@ -68,7 +68,7 @@ const WeeklyReport = () => {
     const teacherLessons = weekLessons.filter((l: any) => l.teacherId === teacher.id);
     
     // Count unique classes taught by this teacher
-    const uniqueClasses = [...new Set(teacherLessons.map((l: any) => String(l.class)))];
+    const uniqueClasses: string[] = [...new Set(teacherLessons.map((l: any) => String(l.class)))];
     
     return {
       teacher: teacher.name,
