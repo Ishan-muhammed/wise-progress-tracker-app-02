@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 interface TeacherSummary {
   teacher: string;
-  classesCount: number;
+  totalLessons: number;
   completedLessons: number;
 }
 
@@ -19,7 +19,7 @@ const TeacherSummaryTable = ({ teacherSummary }: TeacherSummaryTableProps) => {
         <TableHeader>
           <TableRow>
             <TableHead>Teacher</TableHead>
-            <TableHead>Classes Taught</TableHead>
+            <TableHead>Total Lessons</TableHead>
             <TableHead>Completed</TableHead>
           </TableRow>
         </TableHeader>
@@ -27,7 +27,7 @@ const TeacherSummaryTable = ({ teacherSummary }: TeacherSummaryTableProps) => {
           {teacherSummary.map((summary, index) => (
             <TableRow key={index}>
               <TableCell>{summary.teacher}</TableCell>
-              <TableCell>{summary.classesCount}</TableCell>
+              <TableCell>{summary.totalLessons}</TableCell>
               <TableCell>{summary.completedLessons}</TableCell>
             </TableRow>
           ))}

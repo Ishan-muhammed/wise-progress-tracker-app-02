@@ -4,7 +4,7 @@ import ClassSummaryTable from "./ClassSummaryTable";
 
 interface TeacherSummary {
   teacher: string;
-  classesCount: number;
+  totalLessons: number;
   completedLessons: number;
 }
 

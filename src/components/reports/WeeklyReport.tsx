@@ -69,14 +69,9 @@ const WeeklyReport = () => {
   const teacherSummary = users.map(teacher => {
     const teacherLessons = weekLessons.filter((l: any) => l.teacherId === teacher.id);
     
-    // Count unique classes taught by this teacher
-    const classSet = new Set<string>();
-    teacherLessons.forEach((l: any) => classSet.add(String(l.class)));
-    const uniqueClasses: string[] = Array.from(classSet);
-    
     return {
       teacher: teacher.name,
-      classesCount: uniqueClasses.length,
+      totalLessons: teacherLessons.length,
       completedLessons: teacherLessons.filter((l: any) => l.completed).length
     };
   });
