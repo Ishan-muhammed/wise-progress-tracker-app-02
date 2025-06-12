@@ -86,11 +86,22 @@ const WeeklyReport = () => {
         subject: lesson.subject,
         teacher: teacher ? teacher.name : 'Unknown',
         completed: 0,
-        total: 0
+        total: 0,
+        lessons: []
       };
     }
     classSummary[key].total++;
+    classSummary[key].lessons.push(lesson.lessonNumber);
     if (lesson.completed) classSummary[key].completed++;
+  });
+
+  // Sort lessons for each summary entry
+  Object.values(classSummary).forEach((summary: any) => {
+    summary.lessons.sort((a: string, b: string) => {
+      const numA = parseInt(a) || 0;
+      const numB = parseInt(b) || 0;
+      return numA - numB;
+    });
   });
 
   return (

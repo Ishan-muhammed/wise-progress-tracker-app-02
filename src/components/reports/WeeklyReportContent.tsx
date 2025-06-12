@@ -1,4 +1,3 @@
-
 import TeacherSummaryTable from "./TeacherSummaryTable";
 import ClassSummaryTable from "./ClassSummaryTable";
 
@@ -14,6 +13,7 @@ interface ClassSummary {
   completed: number;
   total: number;
   teacher: string;
+  lessons: string[];
 }
 
 interface WeeklyReportContentProps {
