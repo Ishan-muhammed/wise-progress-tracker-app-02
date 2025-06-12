@@ -1,4 +1,5 @@
 
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -67,9 +68,13 @@ const WeeklyReport = () => {
   // Summary by teacher (for selected class or all classes)
   const teacherSummary = users.map(teacher => {
     const teacherLessons = weekLessons.filter((l: any) => l.teacherId === teacher.id);
+    
+    // Count unique classes taught by this teacher
+    const uniqueClasses = [...new Set(teacherLessons.map((l: any) => l.class))];
+    
     return {
       teacher: teacher.name,
-      totalLessons: teacherLessons.length,
+      classesCount: uniqueClasses.length,
       completedLessons: teacherLessons.filter((l: any) => l.completed).length
     };
   });
@@ -155,7 +160,7 @@ const WeeklyReport = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Teacher</TableHead>
-                        <TableHead>Total Lessons</TableHead>
+                        <TableHead>Classes Taught</TableHead>
                         <TableHead>Completed</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -163,7 +168,7 @@ const WeeklyReport = () => {
                       {teacherSummary.map((summary, index) => (
                         <TableRow key={index}>
                           <TableCell>{summary.teacher}</TableCell>
-                          <TableCell>{summary.totalLessons}</TableCell>
+                          <TableCell>{summary.classesCount}</TableCell>
                           <TableCell>{summary.completedLessons}</TableCell>
                         </TableRow>
                       ))}
@@ -202,3 +207,4 @@ const WeeklyReport = () => {
 };
 
 export default WeeklyReport;
+
