@@ -1,10 +1,20 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+
+interface Lesson {
+  id: number;
+  teacherId: string;
+  class: string;
+  subject: string;
+  lessonNumber: string;
+  date: string;
+  completed: boolean;
+  assessment: string;
+}
 
 interface LessonsTableProps {
-  lessons: any[];
-  getTeacherName: (teacherId: number) => string;
+  lessons: Lesson[];
+  getTeacherName: (teacherId: string) => string;
 }
 
 const LessonsTable = ({ lessons, getTeacherName }: LessonsTableProps) => {
@@ -20,29 +30,31 @@ const LessonsTable = ({ lessons, getTeacherName }: LessonsTableProps) => {
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead>Teacher</TableHead>
           <TableHead>Class</TableHead>
           <TableHead>Subject</TableHead>
-          <TableHead>Lesson #</TableHead>
-          <TableHead>Teacher</TableHead>
+          <TableHead>Lesson</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead>Assessment Notes</TableHead>
+          <TableHead>Assessment</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {lessons.map((lesson: any) => (
+        {lessons.map((lesson) => (
           <TableRow key={lesson.id}>
+            <TableCell>{getTeacherName(lesson.teacherId)}</TableCell>
             <TableCell>Class {lesson.class}</TableCell>
             <TableCell>{lesson.subject}</TableCell>
             <TableCell>{lesson.lessonNumber}</TableCell>
-            <TableCell>{getTeacherName(lesson.teacherId)}</TableCell>
             <TableCell>
-              <Badge variant={lesson.completed ? "default" : "secondary"}>
-                {lesson.completed ? "Completed" : "Not Completed"}
-              </Badge>
+              <span className={`px-2 py-1 rounded text-xs ${
+                lesson.completed 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-yellow-100 text-yellow-800'
+              }`}>
+                {lesson.completed ? 'Completed' : 'In Progress'}
+              </span>
             </TableCell>
-            <TableCell className="max-w-xs truncate">
-              {lesson.assessment || "No notes"}
-            </TableCell>
+            <TableCell className="max-w-xs truncate">{lesson.assessment || '-'}</TableCell>
           </TableRow>
         ))}
       </TableBody>

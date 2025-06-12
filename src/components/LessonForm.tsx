@@ -20,7 +20,7 @@ const subjects = [
 ];
 
 interface LessonFormProps {
-  teacherId: number;
+  teacherId: string;
 }
 
 const LessonForm = ({ teacherId }: LessonFormProps) => {
