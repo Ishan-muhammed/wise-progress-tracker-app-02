@@ -19,7 +19,7 @@ const TeacherSummaryTable = ({ teacherSummary }: TeacherSummaryTableProps) => {
         <TableHeader>
           <TableRow>
             <TableHead>Teacher</TableHead>
-            <TableHead>Total Lessons</TableHead>
+            <TableHead>Classes Taught</TableHead>
             <TableHead>Completed</TableHead>
           </TableRow>
         </TableHeader>
