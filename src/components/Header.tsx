@@ -35,6 +35,10 @@ const Header = ({ user }: HeaderProps) => {
     navigate("/admin-dashboard");
   };
 
+  const handleTeacherDashboard = () => {
+    navigate("/teacher-dashboard");
+  };
+
   return (
     <header className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -44,7 +48,7 @@ const Header = ({ user }: HeaderProps) => {
             <span className="text-gray-600">Islamic Studies Progress Tracking</span>
           </div>
           <div className="flex items-center space-x-4">
-            {user.role === "teacher" && (
+            {(user.role === "teacher" || user.role === "admin") && (
               <Menubar>
                 <MenubarMenu>
                   <MenubarTrigger className="cursor-pointer">
@@ -52,9 +56,16 @@ const Header = ({ user }: HeaderProps) => {
                     <span className="ml-2">Menu</span>
                   </MenubarTrigger>
                   <MenubarContent>
-                    <MenubarItem onClick={handleAdminDashboard}>
-                      Admin Dashboard
-                    </MenubarItem>
+                    {user.role === "teacher" && (
+                      <MenubarItem onClick={handleAdminDashboard}>
+                        Admin Dashboard
+                      </MenubarItem>
+                    )}
+                    {user.role === "admin" && (
+                      <MenubarItem onClick={handleTeacherDashboard}>
+                        Teacher Dashboard
+                      </MenubarItem>
+                    )}
                   </MenubarContent>
                 </MenubarMenu>
               </Menubar>
