@@ -21,7 +21,7 @@ const ClassSummaryTable = ({ classSummary }: ClassSummaryTableProps) => {
           <TableRow>
             <TableHead>Class</TableHead>
             <TableHead>Subject</TableHead>
-            <TableHead>Completed/Total</TableHead>
+            <TableHead>Total Lessons</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -29,7 +29,7 @@ const ClassSummaryTable = ({ classSummary }: ClassSummaryTableProps) => {
             <TableRow key={index}>
               <TableCell>Class {summary.class}</TableCell>
               <TableCell>{summary.subject}</TableCell>
-              <TableCell>{summary.completed}/{summary.total}</TableCell>
+              <TableCell>{summary.total}</TableCell>
             </TableRow>
           ))}
         </TableBody>
