@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,8 +14,14 @@ const WeeklyReport = () => {
     { id: 2, name: "Fatima Ali" }
   ];
 
-  // Get unique classes from lessons
-  const allClasses = [...new Set(lessons.map((lesson: any) => lesson.class))].sort();
+  // Get unique classes from lessons and sort them in ascending order
+  const allClasses = [...new Set(lessons.map((lesson: any) => lesson.class))]
+    .sort((a, b) => {
+      // Convert to numbers for proper numerical sorting
+      const numA = parseInt(a);
+      const numB = parseInt(b);
+      return numA - numB;
+    });
 
   // Calculate week start and end based on selected date
   const getWeekRange = (date: Date) => {
