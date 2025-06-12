@@ -1,8 +1,9 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useTeacherProfiles } from "@/hooks/useTeacherProfiles";
 
 interface TeacherSummary {
-  teacher: string;
+  teacherId: string;
   totalLessons: number;
   completedLessons: number;
 }
@@ -12,6 +13,8 @@ interface TeacherSummaryTableProps {
 }
 
 const TeacherSummaryTable = ({ teacherSummary }: TeacherSummaryTableProps) => {
+  const { getTeacherName } = useTeacherProfiles();
+
   return (
     <div>
       <h3 className="text-lg font-semibold mb-4">Summary by Teacher</h3>
@@ -26,7 +29,7 @@ const TeacherSummaryTable = ({ teacherSummary }: TeacherSummaryTableProps) => {
         <TableBody>
           {teacherSummary.map((summary, index) => (
             <TableRow key={index}>
-              <TableCell>{summary.teacher}</TableCell>
+              <TableCell>{getTeacherName(summary.teacherId)}</TableCell>
               <TableCell>{summary.totalLessons}</TableCell>
               <TableCell>{summary.completedLessons}</TableCell>
             </TableRow>

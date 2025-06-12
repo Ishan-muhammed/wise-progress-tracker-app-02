@@ -1,17 +1,17 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateToString } from "@/utils/dateUtils";
+import { useTeacherProfiles } from "@/hooks/useTeacherProfiles";
 import WeeklyReportHeader from "./WeeklyReportHeader";
 import WeeklyReportContent from "./WeeklyReportContent";
 
 const WeeklyReport = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedClass, setSelectedClass] = useState<string>("all");
+  const { profiles, getTeacherName } = useTeacherProfiles();
+  
   const lessons = JSON.parse(localStorage.getItem("lessonCompletions") || "[]");
-  const users = [
-    { id: 1, name: "Ahmad Hassan" },
-    { id: 2, name: "Fatima Ali" }
-  ];
 
   // Get unique classes from lessons and sort them in ascending order
   const classSet = new Set<string>();
@@ -24,7 +24,7 @@ const WeeklyReport = () => {
       return numA - numB;
     });
 
-  // Calculate week start and end based on selected date
+  // Calculate week range based on selected date
   const getWeekRange = (date: Date) => {
     const weekStart = new Date(date);
     weekStart.setDate(date.getDate() - date.getDay());
@@ -65,11 +65,11 @@ const WeeklyReport = () => {
   console.log("=== END WEEKLY REPORT DEBUG ===");
 
   // Summary by teacher (for selected class or all classes)
-  const teacherSummary = users.map(teacher => {
+  const teacherSummary = profiles.map(teacher => {
     const teacherLessons = weekLessons.filter((l: any) => l.teacherId === teacher.id);
     
     return {
-      teacher: teacher.name,
+      teacherId: teacher.id,
       totalLessons: teacherLessons.length,
       completedLessons: teacherLessons.filter((l: any) => l.completed).length
     };
@@ -78,7 +78,7 @@ const WeeklyReport = () => {
   // Summary by class and subject (filtered by selected class)
   const classSummary: any = {};
   weekLessons.forEach((lesson: any) => {
-    const teacher = users.find(u => u.id === lesson.teacherId);
+    const teacher = profiles.find(u => u.id === lesson.teacherId);
     const key = `${lesson.class}-${lesson.subject}-${lesson.teacherId}`;
     if (!classSummary[key]) {
       classSummary[key] = {
