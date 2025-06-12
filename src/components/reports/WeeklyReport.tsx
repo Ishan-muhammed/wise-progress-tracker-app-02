@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -18,8 +19,8 @@ const WeeklyReport = () => {
   const allClasses = [...new Set(lessons.map((lesson: any) => lesson.class))]
     .sort((a, b) => {
       // Convert to numbers for proper numerical sorting
-      const numA = parseInt(a);
-      const numB = parseInt(b);
+      const numA = parseInt(String(a));
+      const numB = parseInt(String(b));
       return numA - numB;
     });
 
