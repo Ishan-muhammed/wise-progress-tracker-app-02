@@ -1,11 +1,9 @@
 
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import DatePicker from "@/components/reports/DatePicker";
 import { formatDateToString } from "@/utils/dateUtils";
+import WeeklyReportHeader from "./WeeklyReportHeader";
+import WeeklyReportContent from "./WeeklyReportContent";
 
 const WeeklyReport = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -99,107 +97,29 @@ const WeeklyReport = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Weekly Report - {weekStart.toLocaleDateString()} to {weekEnd.toLocaleDateString()}</span>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Class:</span>
-                <Select value={selectedClass} onValueChange={setSelectedClass}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Select class" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Classes</SelectItem>
-                    {allClasses.map((className: string) => (
-                      <SelectItem key={className} value={className}>
-                        Class {className}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <DatePicker 
-                selectedDate={selectedDate} 
-                onDateSelect={setSelectedDate}
-              />
-            </div>
+          <CardTitle>
+            <WeeklyReportHeader
+              weekStart={weekStart}
+              weekEnd={weekEnd}
+              selectedClass={selectedClass}
+              onClassChange={setSelectedClass}
+              selectedDate={selectedDate}
+              onDateSelect={setSelectedDate}
+              allClasses={allClasses}
+            />
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {weekLessons.length === 0 ? (
-            <div>
-              <p className="text-center text-muted-foreground py-8">
-                No lessons recorded for this week{selectedClass !== "all" ? ` in Class ${selectedClass}` : ""}.
-              </p>
-              <div className="mt-4 p-4 bg-gray-50 rounded text-sm">
-                <p><strong>Debug Info:</strong></p>
-                <p>Week range: {weekStartStr} to {weekEndStr}</p>
-                <p>Selected class: {selectedClass}</p>
-                <p>Total lessons: {lessons.length}</p>
-                <p>Available classes: {allClasses.join(', ')}</p>
-                <p>Lesson dates: {lessons.map((l: any) => l.date).join(', ')}</p>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {selectedClass !== "all" && (
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold text-blue-900">
-                    Class {selectedClass} Weekly Summary
-                  </h3>
-                  <p className="text-blue-700">
-                    Showing {weekLessons.length} lesson(s) for the selected week
-                  </p>
-                </div>
-              )}
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Summary by Teacher</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Teacher</TableHead>
-                        <TableHead>Classes Taught</TableHead>
-                        <TableHead>Completed</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {teacherSummary.map((summary, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{summary.teacher}</TableCell>
-                          <TableCell>{summary.classesCount}</TableCell>
-                          <TableCell>{summary.completedLessons}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Summary by Class & Subject</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Class</TableHead>
-                        <TableHead>Subject</TableHead>
-                        <TableHead>Completed/Total</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {Object.values(classSummary).map((summary: any, index) => (
-                        <TableRow key={index}>
-                          <TableCell>Class {summary.class}</TableCell>
-                          <TableCell>{summary.subject}</TableCell>
-                          <TableCell>{summary.completed}/{summary.total}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            </div>
-          )}
+          <WeeklyReportContent
+            weekLessons={weekLessons}
+            selectedClass={selectedClass}
+            teacherSummary={teacherSummary}
+            classSummary={classSummary}
+            weekStartStr={weekStartStr}
+            weekEndStr={weekEndStr}
+            lessons={lessons}
+            allClasses={allClasses}
+          />
         </CardContent>
       </Card>
     </div>
@@ -207,4 +127,3 @@ const WeeklyReport = () => {
 };
 
 export default WeeklyReport;
-
