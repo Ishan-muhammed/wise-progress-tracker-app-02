@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -15,13 +16,12 @@ import { Menu } from "lucide-react";
 
 interface Profile {
   name: string;
-  role: string;
 }
 
 const Header = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
@@ -29,7 +29,7 @@ const Header = () => {
       if (user) {
         const { data } = await supabase
           .from('profiles')
-          .select('name, role')
+          .select('name')
           .eq('id', user.id)
           .single();
         
@@ -73,7 +73,9 @@ const Header = () => {
     return null;
   }
 
-  console.log('Current profile role:', profile.role); // Debug log
+  console.log('Current user roles:', roles); // Debug log
+
+  const showMenu = roles.length > 1; // Show menu if user has multiple roles
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -84,22 +86,22 @@ const Header = () => {
             <span className="text-gray-600">Islamic Studies Progress Tracking</span>
           </div>
           <div className="flex items-center space-x-4">
-            {(profile.role === "teacher" || profile.role === "admin") && (
+            {showMenu && (
               <Menubar>
                 <MenubarMenu>
                   <MenubarTrigger className="cursor-pointer">
                     <Menu className="h-4 w-4" />
-                    <span className="ml-2">Menu</span>
+                    <span className="ml-2">Switch Dashboard</span>
                   </MenubarTrigger>
                   <MenubarContent>
-                    {profile.role === "teacher" && (
-                      <MenubarItem onClick={handleAdminDashboard}>
-                        Admin Dashboard
-                      </MenubarItem>
-                    )}
-                    {profile.role === "admin" && (
+                    {roles.includes("teacher") && (
                       <MenubarItem onClick={handleTeacherDashboard}>
                         Teacher Dashboard
+                      </MenubarItem>
+                    )}
+                    {roles.includes("admin") && (
+                      <MenubarItem onClick={handleAdminDashboard}>
+                        Admin Dashboard
                       </MenubarItem>
                     )}
                   </MenubarContent>
@@ -107,7 +109,7 @@ const Header = () => {
               </Menubar>
             )}
             <span className="text-sm text-gray-600">
-              Welcome, {profile.name} ({profile.role})
+              Welcome, {profile.name} ({roles.join(", ")})
             </span>
             <Button variant="outline" onClick={handleLogout}>
               Logout

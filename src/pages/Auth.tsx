@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,12 +15,20 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [role, setRole] = useState("teacher");
+  const [roles, setRoles] = useState<string[]>(["teacher"]);
   const [gender, setGender] = useState("");
   const [age, setAge] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const handleRoleChange = (role: string, checked: boolean) => {
+    if (checked) {
+      setRoles(prev => [...prev, role]);
+    } else {
+      setRoles(prev => prev.filter(r => r !== role));
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,17 +51,22 @@ const Auth = () => {
         description: "Welcome back!",
       });
       
-      // Get user profile to determine redirect
-      const { data: profile } = await supabase
-        .from('profiles')
+      // Get user roles to determine redirect
+      const { data: userRoles } = await supabase
+        .from('user_roles')
         .select('role')
-        .eq('id', data.user.id)
-        .single();
+        .eq('user_id', data.user.id);
       
-      if (profile?.role === 'admin') {
+      const hasAdmin = userRoles?.some(r => r.role === 'admin');
+      const hasTeacher = userRoles?.some(r => r.role === 'teacher');
+      
+      // Redirect based on roles (admin takes precedence)
+      if (hasAdmin) {
         navigate('/admin-dashboard');
-      } else {
+      } else if (hasTeacher) {
         navigate('/teacher-dashboard');
+      } else {
+        navigate('/teacher-dashboard'); // Default fallback
       }
     }
     
@@ -61,6 +75,16 @@ const Auth = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (roles.length === 0) {
+      toast({
+        title: "Role Required",
+        description: "Please select at least one role.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
 
     const redirectUrl = `${window.location.origin}/`;
@@ -72,7 +96,7 @@ const Auth = () => {
         emailRedirectTo: redirectUrl,
         data: {
           name,
-          role,
+          roles, // Pass multiple roles
           gender,
           age
         }
@@ -86,6 +110,20 @@ const Auth = () => {
         variant: "destructive",
       });
     } else {
+      // Insert additional roles if user selected multiple
+      if (data.user && roles.length > 1) {
+        // The trigger will handle the first role, we need to add additional roles
+        const additionalRoles = roles.slice(1);
+        for (const role of additionalRoles) {
+          await supabase
+            .from('user_roles')
+            .insert({
+              user_id: data.user.id,
+              role: role as 'teacher' | 'admin'
+            });
+        }
+      }
+      
       toast({
         title: "Signup Successful",
         description: "Please check your email to confirm your account.",
@@ -151,16 +189,25 @@ const Auth = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
-                  <Select value={role} onValueChange={setRole}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="teacher">Teacher</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Roles</Label>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="teacher"
+                        checked={roles.includes("teacher")}
+                        onCheckedChange={(checked) => handleRoleChange("teacher", checked as boolean)}
+                      />
+                      <Label htmlFor="teacher">Teacher</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="admin"
+                        checked={roles.includes("admin")}
+                        onCheckedChange={(checked) => handleRoleChange("admin", checked as boolean)}
+                      />
+                      <Label htmlFor="admin">Admin</Label>
+                    </div>
+                  </div>
                 </div>
               </>
             )}
