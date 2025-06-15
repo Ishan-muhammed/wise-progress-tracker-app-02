@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import ReportButtons from "@/components/ReportButtons";
 import ProfileSection from "@/components/ProfileSection";
+import TeacherManagement from "@/components/TeacherManagement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const AdminDashboard = () => {
@@ -18,17 +19,22 @@ const AdminDashboard = () => {
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="mb-6 text-center">
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600">Manage reports and system settings</p>
+          <p className="text-gray-600">Manage reports, teachers, and system settings</p>
         </div>
         
         <Tabs defaultValue="reports" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto mb-6">
+          <TabsList className="grid w-full grid-cols-3 max-w-lg mx-auto mb-6">
             <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="teachers">Teachers</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
           
           <TabsContent value="reports">
             <ReportButtons />
+          </TabsContent>
+          
+          <TabsContent value="teachers">
+            <TeacherManagement />
           </TabsContent>
           
           <TabsContent value="profile" className="max-w-4xl mx-auto">
