@@ -37,7 +37,7 @@ const ClassSummaryTable = ({ classSummary, weekStart, weekEnd }: ClassSummaryTab
             <TableHead>Subject</TableHead>
             <TableHead>Lessons</TableHead>
             <TableHead>Teacher</TableHead>
-            <TableHead>Total Lessons</TableHead>
+            <TableHead>Total Completed Lessons</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -51,7 +51,7 @@ const ClassSummaryTable = ({ classSummary, weekStart, weekEnd }: ClassSummaryTab
               <TableCell>{summary.subject}</TableCell>
               <TableCell>{summary.lessons.join(', ')}</TableCell>
               <TableCell>{summary.teacher}</TableCell>
-              <TableCell>{summary.total}</TableCell>
+              <TableCell>{summary.completed}</TableCell>
             </TableRow>
           ))}
         </TableBody>
