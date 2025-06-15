@@ -1,10 +1,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useLessonsInDateRange } from "@/hooks/useLessons";
 
 const MonthlyReport = () => {
-  const lessons = JSON.parse(localStorage.getItem("lessonCompletions") || "[]");
-  
   // Get current month's lessons
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -13,20 +12,14 @@ const MonthlyReport = () => {
   const monthStartStr = monthStart.toISOString().split('T')[0];
   const monthEndStr = monthEnd.toISOString().split('T')[0];
 
+  const { lessons, loading, error } = useLessonsInDateRange(monthStartStr, monthEndStr);
+
   console.log("Monthly Report - Date range:", monthStartStr, "to", monthEndStr);
-  console.log("Monthly Report - All lessons:", lessons);
-
-  // Show ALL lessons in the month, not just completed ones
-  const monthLessons = lessons.filter((lesson: any) => {
-    console.log("Checking lesson date:", lesson.date, "against range:", monthStartStr, "-", monthEndStr);
-    return lesson.date >= monthStartStr && lesson.date <= monthEndStr;
-  });
-
-  console.log("Monthly Report - Filtered lessons:", monthLessons);
+  console.log("Monthly Report - Lessons from Supabase:", lessons.length);
 
   // Summary by class and subject
   const summary: any = {};
-  monthLessons.forEach((lesson: any) => {
+  lessons.forEach((lesson) => {
     const key = `${lesson.class}-${lesson.subject}`;
     if (!summary[key]) {
       summary[key] = {
@@ -39,6 +32,32 @@ const MonthlyReport = () => {
     summary[key].total++;
     if (lesson.completed) summary[key].completed++;
   });
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Monthly Report - {monthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">Loading lessons...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Monthly Report - {monthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-red-500">Error: {error}</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (Object.keys(summary).length === 0) {
     return (

@@ -2,41 +2,36 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
-import { formatDateToString, filterLessonsByDate } from "@/utils/dateUtils";
-import { useDataCleanup } from "@/hooks/useDataCleanup";
-import { useTeacherProfiles } from "@/hooks/useTeacherProfiles";
+import { formatDateToString } from "@/utils/dateUtils";
+import { useLessons } from "@/hooks/useLessons";
 import DatePicker from "./DatePicker";
 import LessonsTable from "./LessonsTable";
-import ClearDataButton from "./ClearDataButton";
 
 const DailyReport = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const { getTeacherName } = useTeacherProfiles();
-  
-  // Clean up old data on component mount
-  useDataCleanup();
   
   const selectedDateStr = formatDateToString(selectedDate);
-  const lessons = JSON.parse(localStorage.getItem("lessonCompletions") || "[]");
-
-  const dayLessons = filterLessonsByDate(lessons, selectedDateStr);
+  const { lessons, loading, error } = useLessons(selectedDateStr);
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Daily Report - {format(selectedDate, "M/d/yyyy")}</CardTitle>
-          <div className="flex items-center gap-2">
-            <ClearDataButton selectedDateStr={selectedDateStr} />
-            <DatePicker 
-              selectedDate={selectedDate} 
-              onDateSelect={setSelectedDate} 
-            />
-          </div>
+          <DatePicker 
+            selectedDate={selectedDate} 
+            onDateSelect={setSelectedDate} 
+          />
         </div>
       </CardHeader>
       <CardContent>
-        <LessonsTable lessons={dayLessons} getTeacherName={getTeacherName} />
+        {loading ? (
+          <div className="text-center py-8">Loading lessons...</div>
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">Error: {error}</div>
+        ) : (
+          <LessonsTable lessons={lessons} />
+        )}
       </CardContent>
     </Card>
   );

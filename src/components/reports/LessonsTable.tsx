@@ -1,23 +1,12 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-
-interface Lesson {
-  id: number;
-  teacherId: string;
-  class: string;
-  subject: string;
-  lessonNumber: string;
-  date: string;
-  completed: boolean;
-  assessment: string;
-}
+import { Lesson } from "@/hooks/useLessons";
 
 interface LessonsTableProps {
-  lessons: Lesson[];
-  getTeacherName: (teacherId: string) => string;
+  lessons: (Lesson & { profiles?: { name: string } })[];
 }
 
-const LessonsTable = ({ lessons, getTeacherName }: LessonsTableProps) => {
+const LessonsTable = ({ lessons }: LessonsTableProps) => {
   if (lessons.length === 0) {
     return (
       <p className="text-center text-muted-foreground py-8">
@@ -41,10 +30,12 @@ const LessonsTable = ({ lessons, getTeacherName }: LessonsTableProps) => {
       <TableBody>
         {lessons.map((lesson) => (
           <TableRow key={lesson.id}>
-            <TableCell>{getTeacherName(lesson.teacherId)}</TableCell>
+            <TableCell>
+              {lesson.profiles?.name || 'Unknown Teacher'}
+            </TableCell>
             <TableCell>Class {lesson.class}</TableCell>
             <TableCell>{lesson.subject}</TableCell>
-            <TableCell>{lesson.lessonNumber}</TableCell>
+            <TableCell>{lesson.lesson_number}</TableCell>
             <TableCell>
               <span className={`px-2 py-1 rounded text-xs ${
                 lesson.completed 

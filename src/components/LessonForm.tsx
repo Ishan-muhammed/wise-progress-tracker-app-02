@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const classes = ["8", "9", "10", "11", "12"];
 const subjects = [
@@ -33,18 +34,18 @@ const LessonForm = ({ teacherId }: LessonFormProps) => {
     assessment: ""
   });
   
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log("=== LESSON FORM SUBMISSION DEBUG ===");
+    console.log("=== LESSON FORM SUBMISSION (SUPABASE) ===");
     console.log("Form submitted with data:", formData);
     console.log("Teacher ID:", teacherId);
     console.log("Date being saved:", formData.date);
-    console.log("Date type:", typeof formData.date);
 
-    // Basic validation - just check required fields
+    // Basic validation
     if (!formData.class || !formData.subject || !formData.lessonNumber || !formData.date) {
       toast({
         title: "Missing Information",
@@ -54,41 +55,62 @@ const LessonForm = ({ teacherId }: LessonFormProps) => {
       return;
     }
 
-    // Save to localStorage (mock database)
-    const existingData = JSON.parse(localStorage.getItem("lessonCompletions") || "[]");
-    const newEntry = {
-      id: Date.now(),
-      teacherId,
-      class: formData.class,
-      subject: formData.subject,
-      lessonNumber: formData.lessonNumber,
-      date: formData.date, // This should be in YYYY-MM-DD format from the date input
-      completed: formData.completed,
-      assessment: formData.assessment,
-      submittedAt: new Date().toISOString()
-    };
-    
-    existingData.push(newEntry);
-    localStorage.setItem("lessonCompletions", JSON.stringify(existingData));
+    setLoading(true);
 
-    console.log("Data saved to localStorage:", newEntry);
-    console.log("All lesson completions:", existingData);
-    console.log("=== END LESSON FORM SUBMISSION DEBUG ===");
+    try {
+      // Insert lesson into Supabase
+      const { data, error } = await supabase
+        .from('lessons')
+        .insert({
+          user_id: teacherId,
+          class: formData.class,
+          subject: formData.subject,
+          lesson_number: formData.lessonNumber,
+          date: formData.date,
+          completed: formData.completed,
+          assessment: formData.assessment || null
+        })
+        .select()
+        .single();
 
-    toast({
-      title: "Lesson Submitted",
-      description: "Your lesson data has been successfully saved!",
-    });
+      if (error) {
+        console.error('Error saving lesson:', error);
+        toast({
+          title: "Error",
+          description: "Failed to save lesson. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    // Reset form
-    setFormData({
-      class: "",
-      subject: "",
-      lessonNumber: "",
-      date: "",
-      completed: false,
-      assessment: ""
-    });
+      console.log("Lesson saved to Supabase:", data);
+      console.log("=== END LESSON FORM SUBMISSION (SUPABASE) ===");
+
+      toast({
+        title: "Lesson Submitted",
+        description: "Your lesson data has been successfully saved!",
+      });
+
+      // Reset form
+      setFormData({
+        class: "",
+        subject: "",
+        lessonNumber: "",
+        date: "",
+        completed: false,
+        assessment: ""
+      });
+
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const selectedSubject = subjects.find(s => s.name === formData.subject);
@@ -180,8 +202,8 @@ const LessonForm = ({ teacherId }: LessonFormProps) => {
             />
           </div>
 
-          <Button type="submit" className="w-full">
-            Submit Lesson Data
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Submitting..." : "Submit Lesson Data"}
           </Button>
         </form>
       </CardContent>
