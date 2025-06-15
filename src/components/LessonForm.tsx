@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -182,13 +182,21 @@ const LessonForm = ({ teacherId }: LessonFormProps) => {
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="completed"
-              checked={formData.completed}
-              onCheckedChange={(checked) => setFormData({...formData, completed: checked as boolean})}
-            />
-            <Label htmlFor="completed">Lesson Finished</Label>
+          <div className="space-y-3">
+            <Label>Lesson Status</Label>
+            <RadioGroup
+              value={formData.completed ? "finished" : "not-finished"}
+              onValueChange={(value) => setFormData({...formData, completed: value === "finished"})}
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="finished" id="finished" />
+                <Label htmlFor="finished">Lesson Finished</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="not-finished" id="not-finished" />
+                <Label htmlFor="not-finished">Not Finished</Label>
+              </div>
+            </RadioGroup>
           </div>
 
           <div className="space-y-2">
