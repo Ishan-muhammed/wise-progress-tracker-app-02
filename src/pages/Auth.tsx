@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useSubjects } from "@/hooks/useSubjects";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -16,17 +17,27 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [roles, setRoles] = useState<string[]>(["teacher"]);
+  const [subjects, setSubjects] = useState<string[]>([]);
   const [gender, setGender] = useState("");
   const [age, setAge] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { subjects: availableSubjects } = useSubjects();
 
   const handleRoleChange = (role: string, checked: boolean) => {
     if (checked) {
       setRoles(prev => [...prev, role]);
     } else {
       setRoles(prev => prev.filter(r => r !== role));
+    }
+  };
+
+  const handleSubjectChange = (subject: string, checked: boolean) => {
+    if (checked) {
+      setSubjects(prev => [...prev, subject]);
+    } else {
+      setSubjects(prev => prev.filter(s => s !== subject));
     }
   };
 
@@ -84,6 +95,15 @@ const Auth = () => {
       });
       return;
     }
+
+    if (!isLogin && subjects.length === 0) {
+      toast({
+        title: "Subjects Required",
+        description: "Please select at least one subject you teach.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsLoading(true);
 
@@ -96,7 +116,8 @@ const Auth = () => {
         emailRedirectTo: redirectUrl,
         data: {
           name,
-          roles, // Pass multiple roles
+          roles,
+          subjects, // Pass selected subjects
           gender,
           age
         }
@@ -112,7 +133,6 @@ const Auth = () => {
     } else {
       // Insert additional roles if user selected multiple
       if (data.user && roles.length > 1) {
-        // The trigger will handle the first role, we need to add additional roles
         const additionalRoles = roles.slice(1);
         for (const role of additionalRoles) {
           await supabase
@@ -207,6 +227,21 @@ const Auth = () => {
                       />
                       <Label htmlFor="admin">Admin</Label>
                     </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Teaching Subjects</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {availableSubjects.map((subject) => (
+                      <div key={subject.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={subject.name}
+                          checked={subjects.includes(subject.name)}
+                          onCheckedChange={(checked) => handleSubjectChange(subject.name, checked as boolean)}
+                        />
+                        <Label htmlFor={subject.name} className="text-sm">{subject.name}</Label>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </>
