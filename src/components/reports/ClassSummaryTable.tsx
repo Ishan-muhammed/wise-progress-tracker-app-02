@@ -1,4 +1,5 @@
 
+import { useNavigate } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface ClassSummary {
@@ -12,9 +13,20 @@ interface ClassSummary {
 
 interface ClassSummaryTableProps {
   classSummary: Record<string, ClassSummary>;
+  weekStart?: string;
+  weekEnd?: string;
 }
 
-const ClassSummaryTable = ({ classSummary }: ClassSummaryTableProps) => {
+const ClassSummaryTable = ({ classSummary, weekStart, weekEnd }: ClassSummaryTableProps) => {
+  const navigate = useNavigate();
+
+  const handleRowClick = (summary: ClassSummary) => {
+    if (weekStart && weekEnd) {
+      const encodedTeacher = encodeURIComponent(summary.teacher);
+      navigate(`/weekly-detail/${summary.class}/${summary.subject}/${encodedTeacher}/${weekStart}/${weekEnd}`);
+    }
+  };
+
   return (
     <div>
       <h3 className="text-lg font-semibold mb-4">Summary by Class & Subject</h3>
@@ -30,7 +42,11 @@ const ClassSummaryTable = ({ classSummary }: ClassSummaryTableProps) => {
         </TableHeader>
         <TableBody>
           {Object.values(classSummary).map((summary: ClassSummary, index) => (
-            <TableRow key={index}>
+            <TableRow 
+              key={index}
+              onClick={() => handleRowClick(summary)}
+              className={weekStart && weekEnd ? "cursor-pointer hover:bg-blue-50 transition-colors" : ""}
+            >
               <TableCell>Class {summary.class}</TableCell>
               <TableCell>{summary.subject}</TableCell>
               <TableCell>{summary.lessons.join(', ')}</TableCell>
@@ -40,6 +56,11 @@ const ClassSummaryTable = ({ classSummary }: ClassSummaryTableProps) => {
           ))}
         </TableBody>
       </Table>
+      {weekStart && weekEnd && (
+        <p className="text-sm text-muted-foreground mt-2">
+          Click on any row to view detailed lessons for that class and subject.
+        </p>
+      )}
     </div>
   );
 };

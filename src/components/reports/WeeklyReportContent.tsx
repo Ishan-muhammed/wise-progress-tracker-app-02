@@ -64,9 +64,12 @@ const WeeklyReportContent = ({
       )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Ensure teacherSummary items have teacherName */}
         <TeacherSummaryTable teacherSummary={teacherSummary} />
-        <ClassSummaryTable classSummary={classSummary} />
+        <ClassSummaryTable 
+          classSummary={classSummary} 
+          weekStart={weekStartStr}
+          weekEnd={weekEndStr}
+        />
       </div>
     </div>
   );

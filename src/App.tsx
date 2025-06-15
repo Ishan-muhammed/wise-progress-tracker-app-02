@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Auth from "./pages/Auth";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import WeeklyClassSubjectDetail from "./pages/WeeklyClassSubjectDetail";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -37,6 +38,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRoles={['admin']}>
                   <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/weekly-detail/:class/:subject/:teacher/:weekStart/:weekEnd" 
+              element={
+                <ProtectedRoute requiredRoles={['admin', 'teacher']}>
+                  <WeeklyClassSubjectDetail />
                 </ProtectedRoute>
               } 
             />
