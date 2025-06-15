@@ -1,9 +1,9 @@
-
 import TeacherSummaryTable from "./TeacherSummaryTable";
 import ClassSummaryTable from "./ClassSummaryTable";
 
 interface TeacherSummary {
   teacherId: string;
+  teacherName: string;
   totalLessons: number;
   completedLessons: number;
 }
@@ -70,7 +70,8 @@ const WeeklyReportContent = ({
       )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <TeacherSummaryTable teacherSummary={teacherSummary} />
+        {/* Ensure teacherSummary items have teacherName */}
+        <TeacherSummaryTable teacherSummary={teacherSummary as TeacherSummary[]} />
         <ClassSummaryTable classSummary={classSummary} />
       </div>
     </div>
