@@ -109,6 +109,7 @@ const Auth = () => {
 
     const redirectUrl = `${window.location.origin}/`;
 
+    // Fix: Pass the primary role as 'role' and subjects array properly
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -116,10 +117,10 @@ const Auth = () => {
         emailRedirectTo: redirectUrl,
         data: {
           name,
-          roles,
-          subjects, // Pass selected subjects
+          role: roles[0], // Pass primary role as singular 'role'
+          subjects, // Keep subjects as array
           gender,
-          age
+          age: age ? parseInt(age) : null // Convert age to number
         }
       }
     });
