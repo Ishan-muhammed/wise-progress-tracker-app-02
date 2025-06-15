@@ -1,6 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+// Add 'profiles' as an optional property for teacher name
 export interface Lesson {
   id: string;
   user_id: string;
@@ -12,14 +14,17 @@ export interface Lesson {
   assessment: string | null;
   created_at: string;
   updated_at: string;
+  profiles?: {
+    name?: string;
+  };
 }
 
+// Fix fetchLessons for single date
 export const useLessons = (dateFilter?: string) => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Move fetchLessons outside useEffect to make it available as refetch
   const fetchLessons = async () => {
     try {
       setLoading(true);
@@ -29,7 +34,7 @@ export const useLessons = (dateFilter?: string) => {
         .from('lessons')
         .select(`
           *,
-          profiles!lessons_user_id_fkey(name)
+          profiles(name)
         `)
         .order('date', { ascending: false });
 
@@ -46,6 +51,7 @@ export const useLessons = (dateFilter?: string) => {
         return;
       }
 
+      // 'profiles' property may be null if join fails
       setLessons(data || []);
     } catch (err) {
       console.error('Unexpected error fetching lessons:', err);
@@ -79,7 +85,7 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
           .from('lessons')
           .select(`
             *,
-            profiles!lessons_user_id_fkey(name)
+            profiles(name)
           `)
           .gte('date', startDate)
           .lte('date', endDate)
@@ -88,6 +94,7 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
         if (error) {
           console.error('Error fetching lessons in date range:', error);
           setError('Failed to fetch lessons');
+          setLessons([]);
           return;
         }
 
@@ -95,6 +102,7 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
       } catch (err) {
         console.error('Unexpected error fetching lessons:', err);
         setError('An unexpected error occurred');
+        setLessons([]);
       } finally {
         setLoading(false);
       }

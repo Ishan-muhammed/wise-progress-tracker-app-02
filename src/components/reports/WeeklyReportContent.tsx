@@ -65,7 +65,7 @@ const WeeklyReportContent = ({
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Ensure teacherSummary items have teacherName */}
-        <TeacherSummaryTable teacherSummary={teacherSummary as TeacherSummary[]} />
+        <TeacherSummaryTable teacherSummary={teacherSummary} />
         <ClassSummaryTable classSummary={classSummary} />
       </div>
     </div>

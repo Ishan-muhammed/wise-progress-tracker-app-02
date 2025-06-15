@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Lesson } from "@/hooks/useLessons";
 
 interface LessonsTableProps {
-  lessons: (Lesson & { profiles?: { name: string } })[];
+  lessons: Lesson[];
 }
 
 const LessonsTable = ({ lessons }: LessonsTableProps) => {

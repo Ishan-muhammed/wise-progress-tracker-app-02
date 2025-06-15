@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateToString } from "@/utils/dateUtils";
@@ -63,7 +62,7 @@ const WeeklyReport = () => {
     } else {
       acc.push({
         teacherId: lesson.user_id,
-        teacherName: (lesson as any).profiles?.name || 'Unknown Teacher',
+        teacherName: lesson.profiles?.name || 'Unknown Teacher',
         totalLessons: 1,
         completedLessons: lesson.completed ? 1 : 0
       });
