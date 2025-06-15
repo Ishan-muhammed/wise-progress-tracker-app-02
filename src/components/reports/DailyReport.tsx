@@ -16,8 +16,8 @@ import {
   SelectItem
 } from "@/components/ui/select";
 
-// List of all classes (edit this if you need more or fewer classes)
-const ALL_CLASSES = ['1','2','3','4','5','6','7','8','9','10','11','12'];
+// List of classes 8-12 only
+const ALL_CLASSES = ['8','9','10','11','12'];
 
 const DailyReport = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());

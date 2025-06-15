@@ -21,6 +21,12 @@ const WeeklyReportHeader = ({
   onDateSelect,
   allClasses
 }: WeeklyReportHeaderProps) => {
+  // Filter classes to only show 8-12
+  const filteredClasses = allClasses.filter(className => {
+    const classNum = parseInt(className);
+    return classNum >= 8 && classNum <= 12;
+  });
+
   return (
     <div className="flex items-center justify-between">
       <span>Weekly Report - {weekStart.toLocaleDateString()} to {weekEnd.toLocaleDateString()}</span>
@@ -33,7 +39,7 @@ const WeeklyReportHeader = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Classes</SelectItem>
-              {allClasses.map((className: string) => (
+              {filteredClasses.map((className: string) => (
                 <SelectItem key={className} value={className}>
                   Class {className}
                 </SelectItem>
