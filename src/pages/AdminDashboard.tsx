@@ -7,12 +7,22 @@ import TeacherManagement from "@/components/TeacherManagement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const AdminDashboard = () => {
-  const { user, isAdmin, roles } = useAuth();
+  const { user, isAdmin, roles, loading } = useAuth();
 
+  // Show loading only while auth is loading
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading authentication...</div>
+      </div>
+    );
+  }
+
+  // If no user after loading is complete, redirect will be handled by ProtectedRoute
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <div className="text-lg">Authentication required...</div>
       </div>
     );
   }
