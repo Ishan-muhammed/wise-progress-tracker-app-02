@@ -70,7 +70,10 @@ export const useLessons = (dateFilter?: string) => {
         query = query.eq('date', dateFilter);
       }
 
-      console.log('Executing lessons query...');
+      // Note: We don't need to add user filtering here anymore because:
+      // 1. Teachers will only see their own lessons due to RLS policies
+      // 2. Admins will see all lessons due to the updated RLS policies
+      console.log('Executing lessons query (RLS will handle filtering)...');
       const { data: lessonsData, error: lessonsError } = await query;
 
       if (lessonsError) {
@@ -178,7 +181,7 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
           return;
         }
 
-        console.log('Executing date range query...');
+        console.log('Executing date range query (RLS will handle filtering)...');
         const { data: lessonsData, error: lessonsError } = await supabase
           .from('lessons')
           .select('*')
