@@ -26,6 +26,7 @@ export const useSubjects = () => {
           console.error('Error fetching subjects:', error);
         } else {
           setSubjects(data || []);
+          console.log('Fetched subjects:', data); // ADDED FOR DEBUGGING
         }
       } catch (err) {
         setError('Failed to fetch subjects');
