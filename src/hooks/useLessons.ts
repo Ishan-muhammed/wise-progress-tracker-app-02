@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-// Add 'profiles' as an optional property for teacher name
 export interface Lesson {
   id: string;
   user_id: string;
@@ -19,7 +18,16 @@ export interface Lesson {
   };
 }
 
-// Fix fetchLessons for single date
+// Helper to merge teacher name into lessons
+function mergeProfiles(lessons: Lesson[], profiles: Record<string, { name?: string }>): Lesson[] {
+  return lessons.map(lesson => ({
+    ...lesson,
+    profiles: {
+      name: profiles[lesson.user_id]?.name || "Unknown Teacher"
+    }
+  }));
+}
+
 export const useLessons = (dateFilter?: string) => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,27 +40,51 @@ export const useLessons = (dateFilter?: string) => {
 
       let query = supabase
         .from('lessons')
-        .select(`
-          *,
-          profiles(name)
-        `)
+        .select('*')
         .order('date', { ascending: false });
 
       if (dateFilter) {
         query = query.eq('date', dateFilter);
       }
 
-      const { data, error } = await query;
+      const { data: lessonsData, error: lessonsError } = await query;
 
-      if (error) {
-        console.error('Error fetching lessons:', error);
+      if (lessonsError) {
+        console.error('Error fetching lessons:', lessonsError);
         setError('Failed to fetch lessons');
         setLessons([]);
         return;
       }
 
-      // 'profiles' property may be null if join fails
-      setLessons(data || []);
+      if (!lessonsData || lessonsData.length === 0) {
+        setLessons([]);
+        return;
+      }
+
+      // Get unique user_ids
+      const userIds = [...new Set(lessonsData.map((lesson: Lesson) => lesson.user_id))];
+
+      // Fetch profiles for all lesson user_ids in one go
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, name')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Error fetching profile names:', profilesError);
+      }
+
+      const profileMap: Record<string, { name?: string }> = {};
+      if (profilesData) {
+        profilesData.forEach((profile: any) => {
+          profileMap[profile.id] = { name: profile.name };
+        });
+      }
+
+      // Merge teacher name into each lesson
+      const merged = mergeProfiles(lessonsData as Lesson[], profileMap);
+      setLessons(merged);
+
     } catch (err) {
       console.error('Unexpected error fetching lessons:', err);
       setError('An unexpected error occurred');
@@ -81,24 +113,45 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
         setLoading(true);
         setError(null);
 
-        const { data, error } = await supabase
+        const { data: lessonsData, error: lessonsError } = await supabase
           .from('lessons')
-          .select(`
-            *,
-            profiles(name)
-          `)
+          .select('*')
           .gte('date', startDate)
           .lte('date', endDate)
           .order('date', { ascending: false });
 
-        if (error) {
-          console.error('Error fetching lessons in date range:', error);
+        if (lessonsError) {
+          console.error('Error fetching lessons in date range:', lessonsError);
           setError('Failed to fetch lessons');
           setLessons([]);
           return;
         }
 
-        setLessons(data || []);
+        if (!lessonsData || lessonsData.length === 0) {
+          setLessons([]);
+          return;
+        }
+
+        const userIds = [...new Set(lessonsData.map((lesson: Lesson) => lesson.user_id))];
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, name')
+          .in('id', userIds);
+
+        if (profilesError) {
+          console.error('Error fetching profile names:', profilesError);
+        }
+
+        const profileMap: Record<string, { name?: string }> = {};
+        if (profilesData) {
+          profilesData.forEach((profile: any) => {
+            profileMap[profile.id] = { name: profile.name };
+          });
+        }
+
+        const merged = mergeProfiles(lessonsData as Lesson[], profileMap);
+        setLessons(merged);
+
       } catch (err) {
         console.error('Unexpected error fetching lessons:', err);
         setError('An unexpected error occurred');
@@ -115,3 +168,4 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
 
   return { lessons, loading, error };
 };
+
