@@ -1,12 +1,6 @@
 import TeacherSummaryTable from "./TeacherSummaryTable";
 import ClassSummaryTable from "./ClassSummaryTable";
-
-interface TeacherSummary {
-  teacherId: string;
-  teacherName: string;
-  totalLessons: number;
-  completedLessons: number;
-}
+import { TeacherSummary } from "./types";
 
 interface ClassSummary {
   class: string;

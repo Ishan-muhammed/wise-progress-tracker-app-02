@@ -1,12 +1,5 @@
-
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-
-interface TeacherSummary {
-  teacherId: string;
-  teacherName: string;
-  totalLessons: number;
-  completedLessons: number;
-}
+import { TeacherSummary } from "./types";
 
 interface TeacherSummaryTableProps {
   teacherSummary: TeacherSummary[];
