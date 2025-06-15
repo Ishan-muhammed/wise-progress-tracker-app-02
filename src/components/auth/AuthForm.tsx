@@ -31,48 +31,62 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
     e.preventDefault();
     setIsLoading(true);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
+      if (error) {
+        console.error('Login error:', error);
+        toast({
+          title: "Login Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data.user) {
+        toast({
+          title: "Login Successful",
+          description: "Welcome back!",
+        });
+        
+        // Get user roles to determine redirect
+        const { data: userRoles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', data.user.id);
+        
+        const hasAdmin = userRoles?.some(r => r.role === 'admin');
+        const hasTeacher = userRoles?.some(r => r.role === 'teacher');
+        
+        // Redirect based on roles (admin takes precedence)
+        if (hasAdmin) {
+          navigate('/admin-dashboard');
+        } else if (hasTeacher) {
+          navigate('/teacher-dashboard');
+        } else {
+          navigate('/teacher-dashboard'); // Default fallback
+        }
+      }
+    } catch (err) {
+      console.error('Unexpected login error:', err);
       toast({
         title: "Login Failed",
-        description: error.message,
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Login Successful",
-        description: "Welcome back!",
-      });
-      
-      // Get user roles to determine redirect
-      const { data: userRoles } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', data.user.id);
-      
-      const hasAdmin = userRoles?.some(r => r.role === 'admin');
-      const hasTeacher = userRoles?.some(r => r.role === 'teacher');
-      
-      // Redirect based on roles (admin takes precedence)
-      if (hasAdmin) {
-        navigate('/admin-dashboard');
-      } else if (hasTeacher) {
-        navigate('/teacher-dashboard');
-      } else {
-        navigate('/teacher-dashboard'); // Default fallback
-      }
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validation checks
     if (roles.length === 0) {
       toast({
         title: "Role Required",
@@ -90,43 +104,74 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
       });
       return;
     }
-    
-    setIsLoading(true);
 
-    const redirectUrl = `${window.location.origin}/`;
-
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          name,
-          role: roles[0],
-          subjects,
-          gender,
-          age: age ? parseInt(age) : null
-        }
-      }
-    });
-
-    if (error) {
+    if (!name.trim()) {
       toast({
-        title: "Signup Failed",
-        description: error.message,
+        title: "Name Required",
+        description: "Please enter your full name.",
         variant: "destructive",
       });
-    } else {
+      return;
+    }
+
+    if (!age || parseInt(age) < 1 || parseInt(age) > 150) {
+      toast({
+        title: "Valid Age Required",
+        description: "Please enter a valid age between 1 and 150.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsLoading(true);
+    console.log('Starting signup process for:', email);
+
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            name: name.trim(),
+            role: roles[0],
+            subjects,
+            gender: gender || null,
+            age: parseInt(age)
+          }
+        }
+      });
+
+      if (error) {
+        console.error('Signup error:', error);
+        toast({
+          title: "Signup Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Signup successful, user ID:', data.user?.id);
+
       // Insert additional roles if user selected multiple
       if (data.user && roles.length > 1) {
         const additionalRoles = roles.slice(1);
+        console.log('Adding additional roles:', additionalRoles);
+        
         for (const role of additionalRoles) {
-          await supabase
+          const { error: roleError } = await supabase
             .from('user_roles')
             .insert({
               user_id: data.user.id,
               role: role as 'teacher' | 'admin'
             });
+          
+          if (roleError) {
+            console.error('Error adding additional role:', role, roleError);
+          }
         }
       }
       
@@ -135,9 +180,17 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
         description: "Please check your email to confirm your account.",
       });
       onToggleMode();
+      
+    } catch (err) {
+      console.error('Unexpected signup error:', err);
+      toast({
+        title: "Signup Failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   return (
@@ -145,7 +198,7 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
       {!isLogin && (
         <>
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="name">Full Name *</Label>
             <Input
               id="name"
               type="text"
@@ -159,7 +212,7 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
             <Label htmlFor="gender">Gender</Label>
             <Select value={gender} onValueChange={setGender}>
               <SelectTrigger>
-                <SelectValue placeholder="Select your gender" />
+                <SelectValue placeholder="Select your gender (optional)" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="male">Male</SelectItem>
@@ -169,7 +222,7 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="age">Age</Label>
+            <Label htmlFor="age">Age *</Label>
             <Input
               id="age"
               type="number"
@@ -186,7 +239,7 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
         </>
       )}
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">Email *</Label>
         <Input
           id="email"
           type="email"
@@ -197,7 +250,7 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">Password *</Label>
         <Input
           id="password"
           type="password"
@@ -205,6 +258,7 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          minLength={6}
         />
       </div>
       <Button type="submit" className="w-full" disabled={isLoading}>
