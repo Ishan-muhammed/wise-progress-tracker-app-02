@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from "react-router-dom"; // Add navigation
+import { useNavigate } from "react-router-dom";
 
 export type UserRole = 'teacher' | 'admin';
 
@@ -62,67 +62,72 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     let cancelled = false;
-    let loadingTimeout: ReturnType<typeof setTimeout> | null = null;
-
-    // Show loading max 7s, then force to not-loading & potentially redirect
-    loadingTimeout = setTimeout(() => {
-      if (!cancelled && loading) {
-        setLoading(false);
-        if (!user && !session) {
-          console.warn("[AuthContext] Timeout expired, redirecting to /auth due to no session/user.");
-          navigate('/auth');
-        }
-      }
-    }, 7000);
 
     // Auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (cancelled) return;
 
+        console.log('Auth state change:', event, session?.user?.id);
+        
         setSession(session);
         setUser(session?.user ?? null);
+        
         if (session?.user) {
           const userRoles = await fetchUserRoles(session.user.id);
-          if (!cancelled) setRoles(userRoles);
+          if (!cancelled) {
+            setRoles(userRoles);
+            
+            // Navigate based on user role after successful auth
+            const currentPath = window.location.pathname;
+            if (currentPath === '/auth' || currentPath === '/') {
+              if (userRoles.includes('admin')) {
+                navigate('/admin-dashboard');
+              } else if (userRoles.includes('teacher')) {
+                navigate('/teacher-dashboard');
+              }
+            }
+          }
         } else {
           setRoles([]);
+          // Only redirect to auth if not already there and not on public pages
+          const currentPath = window.location.pathname;
+          if (currentPath !== '/auth' && currentPath !== '/') {
+            navigate('/auth');
+          }
         }
+        
         setLoading(false);
       }
     );
 
-    // Get session from Supabase
+    // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (cancelled) return;
+      
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
         const userRoles = await fetchUserRoles(session.user.id);
-        if (!cancelled) setRoles(userRoles);
+        if (!cancelled) {
+          setRoles(userRoles);
+        }
       }
+      
       setLoading(false);
     }).catch((e) => {
-      if (!cancelled) setLoading(false);
-      console.error("[AuthContext] Error getting session:", e);
+      if (!cancelled) {
+        console.error("[AuthContext] Error getting session:", e);
+        setLoading(false);
+      }
     });
 
     return () => {
       cancelled = true;
       subscription.unsubscribe();
-      if (loadingTimeout) clearTimeout(loadingTimeout);
     };
-    // only run on mount
-    // eslint-disable-next-line
-  }, []);
-
-  // When loading finishes, but still no session/user, redirect to /auth
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate("/auth");
-    }
-  }, [loading, user, navigate]);
+  }, [navigate]);
 
   const hasRole = (role: UserRole) => roles.includes(role);
   const isAdmin = roles.includes('admin');
@@ -142,4 +147,3 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     </React.Suspense>
   );
 };
-

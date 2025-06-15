@@ -65,11 +65,13 @@ export const useLessons = (dateFilter?: string) => {
       if (lessonsError) {
         setError('Failed to fetch lessons');
         setLessons([]);
+        setLoading(false);
         return;
       }
 
       if (!lessonsData || lessonsData.length === 0) {
         setLessons([]);
+        setLoading(false);
         return;
       }
 
@@ -113,13 +115,14 @@ export const useLessons = (dateFilter?: string) => {
   }, [dateFilter, user?.id, isAdmin]);
 
   useEffect(() => {
-    let cancelled = false;
+    // Reset states immediately when dependencies change
+    setLoading(true);
+    setError(null);
+    
     const abortController = new AbortController();
-
     fetchLessons(abortController.signal);
 
     return () => {
-      cancelled = true;
       abortController.abort();
     };
   }, [fetchLessons]);
@@ -156,11 +159,13 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
       if (lessonsError) {
         setError('Failed to fetch lessons');
         setLessons([]);
+        setLoading(false);
         return;
       }
 
       if (!lessonsData || lessonsData.length === 0) {
         setLessons([]);
+        setLoading(false);
         return;
       }
 
@@ -202,13 +207,14 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
   }, [startDate, endDate, user?.id, isAdmin]);
 
   useEffect(() => {
-    let cancelled = false;
+    // Reset states immediately when dependencies change
+    setLoading(true);
+    setError(null);
+    
     const abortController = new AbortController();
-
     fetchLessons(abortController.signal);
 
     return () => {
-      cancelled = true;
       abortController.abort();
     };
   }, [fetchLessons]);
