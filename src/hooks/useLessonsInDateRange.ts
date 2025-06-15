@@ -5,14 +5,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Lesson } from '@/types/lesson';
 import { mergeProfiles, fetchLessonProfiles } from '@/utils/lessonUtils';
 
-export const useLessons = (dateFilter?: string) => {
+export const useLessonsInDateRange = (startDate: string, endDate: string) => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user, isAdmin } = useAuth();
 
   const fetchLessons = useCallback(async (signal?: AbortSignal) => {
-    if (!user) {
+    if (!user || !startDate || !endDate) {
       setLessons([]);
       setLoading(false);
       return;
@@ -22,16 +22,12 @@ export const useLessons = (dateFilter?: string) => {
       setLoading(true);
       setError(null);
 
-      let query = supabase
+      const { data: lessonsData, error: lessonsError } = await supabase
         .from('lessons')
         .select('*')
+        .gte('date', startDate)
+        .lte('date', endDate)
         .order('date', { ascending: false });
-
-      if (dateFilter) {
-        query = query.eq('date', dateFilter);
-      }
-
-      const { data: lessonsData, error: lessonsError } = await query;
 
       if (signal?.aborted) return;
 
@@ -50,14 +46,13 @@ export const useLessons = (dateFilter?: string) => {
 
       // Get unique user_ids and ensure they're strings
       const userIds = [...new Set(lessonsData.map((lesson: Lesson) => String(lesson.user_id)))];
-
+      
       // Fetch profiles for all lesson user_ids
       const profileMap = await fetchLessonProfiles(userIds, signal);
 
       if (signal?.aborted) return;
       if (!profileMap) return;
 
-      // Merge teacher name into each lesson
       const merged = mergeProfiles(lessonsData as Lesson[], profileMap);
       setLessons(merged);
 
@@ -71,7 +66,7 @@ export const useLessons = (dateFilter?: string) => {
       if (signal?.aborted) return;
       setLoading(false);
     }
-  }, [dateFilter, user?.id, isAdmin]);
+  }, [startDate, endDate, user?.id, isAdmin]);
 
   useEffect(() => {
     // Reset states immediately when dependencies change
@@ -86,5 +81,5 @@ export const useLessons = (dateFilter?: string) => {
     };
   }, [fetchLessons]);
 
-  return { lessons, loading, error, refetch: fetchLessons };
+  return { lessons, loading, error };
 };

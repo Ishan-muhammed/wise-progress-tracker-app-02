@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateToString } from "@/utils/dateUtils";
-import { useLessonsInDateRange } from "@/hooks/useLessons";
+import { useLessonsInDateRange } from "@/hooks/useLessonsInDateRange";
 import WeeklyReportHeader from "./WeeklyReportHeader";
 import WeeklyReportContent from "./WeeklyReportContent";
 

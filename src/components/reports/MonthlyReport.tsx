@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useLessonsInDateRange } from "@/hooks/useLessons";
+import { useLessonsInDateRange } from "@/hooks/useLessonsInDateRange";
 
 const MonthlyReport = () => {
   // Get current month's lessons

@@ -1,6 +1,6 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Lesson } from "@/hooks/useLessons";
+import { Lesson } from "@/types/lesson";
 
 interface LessonsTableProps {
   lessons: Lesson[];
