@@ -16,23 +16,32 @@ export const useSubjects = () => {
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
+        console.log('Starting to fetch subjects...'); // DEBUG
+        setLoading(true);
+        
         const { data, error } = await supabase
           .from('subjects')
           .select('*')
           .order('name');
 
+        console.log('Supabase response:', { data, error }); // DEBUG
+
         if (error) {
           setError(error.message);
           console.error('Error fetching subjects:', error);
+          setSubjects([]);
         } else {
           setSubjects(data || []);
-          console.log('Fetched subjects:', data); // ADDED FOR DEBUGGING
+          setError(null);
+          console.log('Successfully fetched subjects:', data); // DEBUG
         }
       } catch (err) {
         setError('Failed to fetch subjects');
-        console.error('Error fetching subjects:', err);
+        console.error('Catch block - Error fetching subjects:', err);
+        setSubjects([]);
       } finally {
         setLoading(false);
+        console.log('Finished fetching subjects, loading set to false'); // DEBUG
       }
     };
 
