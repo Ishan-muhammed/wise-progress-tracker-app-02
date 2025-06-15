@@ -16,6 +16,9 @@ import {
   SelectItem
 } from "@/components/ui/select";
 
+// List of all classes (edit this if you need more or fewer classes)
+const ALL_CLASSES = ['1','2','3','4','5','6','7','8','9','10','11','12'];
+
 const DailyReport = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedClass, setSelectedClass] = useState<string | "all">("all");
@@ -23,15 +26,6 @@ const DailyReport = () => {
 
   const selectedDateStr = formatDateToString(selectedDate);
   const { lessons, loading, error } = useLessons(selectedDateStr);
-
-  // Get unique list of classes from lesson data for dropdown
-  const classes = useMemo(() => {
-    const classSet = new Set<string>();
-    lessons.forEach((lesson) => {
-      if (lesson.class) classSet.add(lesson.class);
-    });
-    return Array.from(classSet).sort();
-  }, [lessons]);
 
   // Filter lessons as per selected class
   const filteredLessons = useMemo(() => {
@@ -77,7 +71,7 @@ const DailyReport = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Classes</SelectItem>
-              {classes.map(classVal => (
+              {ALL_CLASSES.map(classVal => (
                 <SelectItem key={classVal} value={classVal}>
                   Class {classVal}
                 </SelectItem>
@@ -92,7 +86,14 @@ const DailyReport = () => {
         ) : error ? (
           <div className="text-center py-8 text-red-500">Error: {error}</div>
         ) : (
-          <LessonsTable lessons={filteredLessons} />
+          <LessonsTable 
+            lessons={filteredLessons} 
+            emptyText={
+              selectedClass === "all"
+                ? "No lessons recorded for this date."
+                : "No reports have been submitted."
+            }
+          />
         )}
       </CardContent>
     </Card>

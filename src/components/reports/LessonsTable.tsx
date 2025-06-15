@@ -4,13 +4,14 @@ import { Lesson } from "@/hooks/useLessons";
 
 interface LessonsTableProps {
   lessons: Lesson[];
+  emptyText?: string;
 }
 
-const LessonsTable = ({ lessons }: LessonsTableProps) => {
+const LessonsTable = ({ lessons, emptyText }: LessonsTableProps) => {
   if (lessons.length === 0) {
     return (
       <p className="text-center text-muted-foreground py-8">
-        No lessons recorded for this date.
+        {emptyText || "No lessons recorded for this date."}
       </p>
     );
   }
