@@ -63,6 +63,7 @@ export const useLessons = (dateFilter?: string) => {
 
       // Get unique user_ids
       const userIds = [...new Set(lessonsData.map((lesson: Lesson) => lesson.user_id))];
+      console.log('DEBUG: User IDs from lessons:', userIds);
 
       // Fetch profiles for all lesson user_ids in one go
       const { data: profilesData, error: profilesError } = await supabase
@@ -74,6 +75,8 @@ export const useLessons = (dateFilter?: string) => {
         console.error('Error fetching profile names:', profilesError);
       }
 
+      console.log('DEBUG: Profiles data:', profilesData);
+
       const profileMap: Record<string, { name?: string }> = {};
       if (profilesData) {
         profilesData.forEach((profile: any) => {
@@ -81,8 +84,11 @@ export const useLessons = (dateFilter?: string) => {
         });
       }
 
+      console.log('DEBUG: Profile map:', profileMap);
+
       // Merge teacher name into each lesson
       const merged = mergeProfiles(lessonsData as Lesson[], profileMap);
+      console.log('DEBUG: Merged lessons with profiles:', merged);
       setLessons(merged);
 
     } catch (err) {
@@ -133,6 +139,8 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
         }
 
         const userIds = [...new Set(lessonsData.map((lesson: Lesson) => lesson.user_id))];
+        console.log('DEBUG: User IDs from lessons (date range):', userIds);
+        
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
           .select('id, name')
@@ -142,6 +150,8 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
           console.error('Error fetching profile names:', profilesError);
         }
 
+        console.log('DEBUG: Profiles data (date range):', profilesData);
+
         const profileMap: Record<string, { name?: string }> = {};
         if (profilesData) {
           profilesData.forEach((profile: any) => {
@@ -149,7 +159,10 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
           });
         }
 
+        console.log('DEBUG: Profile map (date range):', profileMap);
+
         const merged = mergeProfiles(lessonsData as Lesson[], profileMap);
+        console.log('DEBUG: Merged lessons with profiles (date range):', merged);
         setLessons(merged);
 
       } catch (err) {
@@ -168,4 +181,3 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
 
   return { lessons, loading, error };
 };
-
