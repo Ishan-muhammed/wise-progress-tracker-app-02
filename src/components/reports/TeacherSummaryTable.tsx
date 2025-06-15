@@ -1,3 +1,4 @@
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TeacherSummary } from "./types";
 
@@ -14,7 +15,7 @@ const TeacherSummaryTable = ({ teacherSummary }: TeacherSummaryTableProps) => {
           <TableRow>
             <TableHead>Teacher</TableHead>
             <TableHead>Classes Taught</TableHead>
-            <TableHead>Completed</TableHead>
+            <TableHead>Total Completed Lessons</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
