@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface Lesson {
   id: string;
@@ -23,15 +24,10 @@ function mergeProfiles(lessons: Lesson[], profiles: Record<string, { name?: stri
   console.log('=== MERGE PROFILES DEBUG ===');
   console.log('Lessons to merge:', lessons.length);
   console.log('Profile map keys:', Object.keys(profiles));
-  console.log('Profile map values:', profiles);
   
   return lessons.map(lesson => {
-    console.log(`Processing lesson ID: ${lesson.id}, user_id: ${lesson.user_id}`);
-    console.log(`Looking for profile with key: ${lesson.user_id}`);
-    console.log(`Found profile:`, profiles[lesson.user_id]);
-    
     const teacherName = profiles[lesson.user_id]?.name || "Unknown Teacher";
-    console.log(`Final teacher name for lesson ${lesson.id}: ${teacherName}`);
+    console.log(`Lesson ${lesson.id}: user_id=${lesson.user_id}, teacher=${teacherName}`);
     
     return {
       ...lesson,
@@ -46,11 +42,24 @@ export const useLessons = (dateFilter?: string) => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user, isAdmin } = useAuth();
 
   const fetchLessons = async () => {
     try {
       setLoading(true);
       setError(null);
+
+      console.log('=== LESSONS FETCH DEBUG ===');
+      console.log('Current user:', user?.id);
+      console.log('Is admin:', isAdmin);
+      console.log('Date filter:', dateFilter);
+
+      if (!user) {
+        console.log('No authenticated user, cannot fetch lessons');
+        setLessons([]);
+        setLoading(false);
+        return;
+      }
 
       let query = supabase
         .from('lessons')
@@ -61,6 +70,7 @@ export const useLessons = (dateFilter?: string) => {
         query = query.eq('date', dateFilter);
       }
 
+      console.log('Executing lessons query...');
       const { data: lessonsData, error: lessonsError } = await query;
 
       if (lessonsError) {
@@ -70,20 +80,21 @@ export const useLessons = (dateFilter?: string) => {
         return;
       }
 
+      console.log('Raw lessons data from database:', lessonsData);
+      console.log('Number of lessons fetched:', lessonsData?.length || 0);
+
       if (!lessonsData || lessonsData.length === 0) {
+        console.log('No lessons found in database');
         setLessons([]);
         return;
       }
 
-      console.log('=== LESSONS FETCH DEBUG ===');
-      console.log('Raw lessons data:', lessonsData);
-
       // Get unique user_ids and ensure they're strings
       const userIds = [...new Set(lessonsData.map((lesson: Lesson) => String(lesson.user_id)))];
-      console.log('Unique user IDs from lessons:', userIds);
-      console.log('User ID types:', userIds.map(id => ({ id, type: typeof id })));
+      console.log('Unique teacher user IDs in lessons:', userIds);
 
       // Fetch profiles for all lesson user_ids in one go
+      console.log('Fetching teacher profiles...');
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, name')
@@ -93,13 +104,12 @@ export const useLessons = (dateFilter?: string) => {
         console.error('Error fetching profile names:', profilesError);
       }
 
-      console.log('=== PROFILES FETCH DEBUG ===');
       console.log('Raw profiles data:', profilesData);
 
       const profileMap: Record<string, { name?: string }> = {};
       if (profilesData) {
         profilesData.forEach((profile: any) => {
-          const profileId = String(profile.id); // Ensure consistent string type
+          const profileId = String(profile.id);
           profileMap[profileId] = { name: profile.name };
           console.log(`Profile mapping: ${profileId} -> ${profile.name}`);
         });
@@ -109,8 +119,17 @@ export const useLessons = (dateFilter?: string) => {
 
       // Merge teacher name into each lesson
       const merged = mergeProfiles(lessonsData as Lesson[], profileMap);
-      console.log('Final merged lessons:', merged.map(l => ({ id: l.id, user_id: l.user_id, teacher: l.profiles?.name })));
+      console.log('Final merged lessons with teacher names:', merged.map(l => ({ 
+        id: l.id, 
+        user_id: l.user_id, 
+        teacher: l.profiles?.name,
+        date: l.date,
+        subject: l.subject,
+        class: l.class
+      })));
+      
       setLessons(merged);
+      console.log('=== END LESSONS FETCH DEBUG ===');
 
     } catch (err) {
       console.error('Unexpected error fetching lessons:', err);
@@ -122,9 +141,14 @@ export const useLessons = (dateFilter?: string) => {
   };
 
   useEffect(() => {
-    fetchLessons();
+    if (user) {
+      fetchLessons();
+    } else {
+      setLessons([]);
+      setLoading(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateFilter]);
+  }, [dateFilter, user, isAdmin]);
 
   return { lessons, loading, error, refetch: fetchLessons };
 };
@@ -133,6 +157,7 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user, isAdmin } = useAuth();
 
   useEffect(() => {
     const fetchLessons = async () => {
@@ -140,6 +165,20 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
         setLoading(true);
         setError(null);
 
+        console.log('=== DATE RANGE LESSONS FETCH DEBUG ===');
+        console.log('Current user:', user?.id);
+        console.log('Is admin:', isAdmin);
+        console.log('Start date:', startDate);
+        console.log('End date:', endDate);
+
+        if (!user) {
+          console.log('No authenticated user, cannot fetch lessons');
+          setLessons([]);
+          setLoading(false);
+          return;
+        }
+
+        console.log('Executing date range query...');
         const { data: lessonsData, error: lessonsError } = await supabase
           .from('lessons')
           .select('*')
@@ -154,17 +193,18 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
           return;
         }
 
+        console.log('Raw lessons data (date range):', lessonsData);
+        console.log('Number of lessons in date range:', lessonsData?.length || 0);
+
         if (!lessonsData || lessonsData.length === 0) {
+          console.log('No lessons found in date range');
           setLessons([]);
           return;
         }
 
-        console.log('=== DATE RANGE LESSONS FETCH DEBUG ===');
-        console.log('Raw lessons data (date range):', lessonsData);
-
         // Get unique user_ids and ensure they're strings
         const userIds = [...new Set(lessonsData.map((lesson: Lesson) => String(lesson.user_id)))];
-        console.log('Unique user IDs from lessons (date range):', userIds);
+        console.log('Unique teacher user IDs (date range):', userIds);
         
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
@@ -175,23 +215,27 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
           console.error('Error fetching profile names:', profilesError);
         }
 
-        console.log('=== PROFILES FETCH DEBUG (DATE RANGE) ===');
         console.log('Raw profiles data (date range):', profilesData);
 
         const profileMap: Record<string, { name?: string }> = {};
         if (profilesData) {
           profilesData.forEach((profile: any) => {
-            const profileId = String(profile.id); // Ensure consistent string type
+            const profileId = String(profile.id);
             profileMap[profileId] = { name: profile.name };
             console.log(`Profile mapping (date range): ${profileId} -> ${profile.name}`);
           });
         }
 
-        console.log('Final profile map (date range):', profileMap);
-
         const merged = mergeProfiles(lessonsData as Lesson[], profileMap);
-        console.log('Final merged lessons (date range):', merged.map(l => ({ id: l.id, user_id: l.user_id, teacher: l.profiles?.name })));
+        console.log('Final merged lessons (date range):', merged.map(l => ({ 
+          id: l.id, 
+          user_id: l.user_id, 
+          teacher: l.profiles?.name,
+          date: l.date 
+        })));
+        
         setLessons(merged);
+        console.log('=== END DATE RANGE LESSONS FETCH DEBUG ===');
 
       } catch (err) {
         console.error('Unexpected error fetching lessons:', err);
@@ -202,10 +246,13 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
       }
     };
 
-    if (startDate && endDate) {
+    if (startDate && endDate && user) {
       fetchLessons();
+    } else {
+      setLessons([]);
+      setLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, user, isAdmin]);
 
   return { lessons, loading, error };
 };
