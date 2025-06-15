@@ -63,6 +63,41 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     let cancelled = false;
 
+    // Get initial session first
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (cancelled) return;
+        
+        if (error) {
+          console.error('[AuthContext] Error getting session:', error);
+          setLoading(false);
+          return;
+        }
+
+        console.log('Initial session:', session?.user?.id);
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          const userRoles = await fetchUserRoles(session.user.id);
+          if (!cancelled) {
+            setRoles(userRoles);
+          }
+        } else {
+          setRoles([]);
+        }
+        
+        setLoading(false);
+      } catch (e) {
+        if (!cancelled) {
+          console.error("[AuthContext] Error initializing auth:", e);
+          setLoading(false);
+        }
+      }
+    };
+
     // Auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -78,50 +113,30 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
           if (!cancelled) {
             setRoles(userRoles);
             
-            // Navigate based on user role after successful auth
-            const currentPath = window.location.pathname;
-            if (currentPath === '/auth' || currentPath === '/') {
-              if (userRoles.includes('admin')) {
-                navigate('/admin-dashboard');
-              } else if (userRoles.includes('teacher')) {
-                navigate('/teacher-dashboard');
+            // Only navigate on SIGNED_IN event and if not already on a dashboard
+            if (event === 'SIGNED_IN') {
+              const currentPath = window.location.pathname;
+              if (currentPath === '/auth' || currentPath === '/') {
+                if (userRoles.includes('admin')) {
+                  navigate('/admin-dashboard');
+                } else if (userRoles.includes('teacher')) {
+                  navigate('/teacher-dashboard');
+                }
               }
             }
           }
         } else {
           setRoles([]);
-          // Only redirect to auth if not already there and not on public pages
-          const currentPath = window.location.pathname;
-          if (currentPath !== '/auth' && currentPath !== '/') {
+          // Only redirect to auth if user explicitly signed out
+          if (event === 'SIGNED_OUT') {
             navigate('/auth');
           }
         }
-        
-        setLoading(false);
       }
     );
 
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (cancelled) return;
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-
-      if (session?.user) {
-        const userRoles = await fetchUserRoles(session.user.id);
-        if (!cancelled) {
-          setRoles(userRoles);
-        }
-      }
-      
-      setLoading(false);
-    }).catch((e) => {
-      if (!cancelled) {
-        console.error("[AuthContext] Error getting session:", e);
-        setLoading(false);
-      }
-    });
+    // Initialize auth state
+    initializeAuth();
 
     return () => {
       cancelled = true;

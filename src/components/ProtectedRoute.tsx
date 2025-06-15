@@ -15,22 +15,31 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !user) {
+    // Don't do anything while loading
+    if (loading) return;
+
+    // If no user, redirect to auth
+    if (!user) {
       navigate("/auth");
       return;
     }
 
-    if (!loading && user && requiredRoles && requiredRoles.length > 0) {
-      const hasRequiredRole = requiredRoles.some(role => roles.includes(role));
-      if (!hasRequiredRole) {
-        // Redirect to appropriate dashboard based on user's roles
-        if (roles.includes('admin')) {
-          navigate("/admin-dashboard");
-        } else if (roles.includes('teacher')) {
-          navigate("/teacher-dashboard");
-        } else {
-          navigate("/auth");
-        }
+    // If user exists but no roles required, allow access
+    if (!requiredRoles || requiredRoles.length === 0) {
+      return;
+    }
+
+    // Check if user has any of the required roles
+    const hasRequiredRole = requiredRoles.some(role => roles.includes(role));
+    
+    if (!hasRequiredRole) {
+      // Redirect to appropriate dashboard based on user's roles
+      if (roles.includes('admin')) {
+        navigate("/admin-dashboard");
+      } else if (roles.includes('teacher')) {
+        navigate("/teacher-dashboard");
+      } else {
+        navigate("/auth");
       }
     }
   }, [user, loading, navigate, requiredRoles, roles]);
@@ -45,6 +54,14 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
 
   if (!user) {
     return null;
+  }
+
+  // If roles are required, check them
+  if (requiredRoles && requiredRoles.length > 0) {
+    const hasRequiredRole = requiredRoles.some(role => roles.includes(role));
+    if (!hasRequiredRole) {
+      return null;
+    }
   }
 
   return <>{children}</>;
