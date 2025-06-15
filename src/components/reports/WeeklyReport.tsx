@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateToString } from "@/utils/dateUtils";
@@ -38,20 +39,10 @@ const WeeklyReport = () => {
       return numA - numB;
     });
 
-  console.log("=== WEEKLY REPORT DEBUG (SUPABASE) ===");
-  console.log("Selected date:", formatDateToString(selectedDate));
-  console.log("Selected class:", selectedClass);
-  console.log("Week start date:", weekStartStr);
-  console.log("Week end date:", weekEndStr);
-  console.log("Total lessons from Supabase:", lessons.length);
-
   // Filter by class if a specific class is selected
   const filteredLessons = selectedClass !== "all" 
     ? lessons.filter((lesson) => lesson.class === selectedClass)
     : lessons;
-
-  console.log("Filtered lessons for selected class:", filteredLessons.length);
-  console.log("=== END WEEKLY REPORT DEBUG (SUPABASE) ===");
 
   // Summary by teacher
   const teacherSummary = lessons.reduce((acc: any[], lesson) => {

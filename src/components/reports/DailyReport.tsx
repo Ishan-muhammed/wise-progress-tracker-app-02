@@ -11,25 +11,10 @@ import { Badge } from "@/components/ui/badge";
 
 const DailyReport = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const { user, isAdmin, roles } = useAuth();
+  const { user, isAdmin } = useAuth();
   
   const selectedDateStr = formatDateToString(selectedDate);
   const { lessons, loading, error } = useLessons(selectedDateStr);
-
-  console.log('=== DAILY REPORT DEBUG ===');
-  console.log('Selected date:', selectedDateStr);
-  console.log('Current user:', user?.id);
-  console.log('Is admin:', isAdmin);
-  console.log('User roles:', roles);
-  console.log('Lessons loaded:', lessons.length);
-  console.log('Lessons data:', lessons.map(l => ({ 
-    id: l.id, 
-    teacher: l.profiles?.name, 
-    date: l.date,
-    subject: l.subject,
-    class: l.class
-  })));
-  console.log('=== END DAILY REPORT DEBUG ===');
 
   return (
     <Card>
@@ -37,7 +22,6 @@ const DailyReport = () => {
         <div className="flex items-center justify-between">
           <CardTitle>Daily Report - {format(selectedDate, "M/d/yyyy")}</CardTitle>
           <div className="flex items-center gap-4">
-            {/* Debug info */}
             <div className="flex gap-2">
               <Badge variant={isAdmin ? "default" : "secondary"}>
                 {isAdmin ? "Admin View" : "Teacher View"}

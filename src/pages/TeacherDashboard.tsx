@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import LessonForm from "@/components/LessonForm";
@@ -10,7 +9,11 @@ const TeacherDashboard = () => {
   const { user } = useAuth();
 
   if (!user) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
   }
 
   return (

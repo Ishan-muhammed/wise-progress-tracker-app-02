@@ -39,9 +39,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchUserRoles = async (userId: string) => {
     try {
-      console.log('=== FETCHING USER ROLES DEBUG ===');
-      console.log('Fetching roles for user ID:', userId);
-      
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
@@ -52,11 +49,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return [];
       }
 
-      const userRoles = data?.map(r => r.role as UserRole) || [];
-      console.log('Fetched user roles:', userRoles);
-      console.log('=== END USER ROLES DEBUG ===');
-      
-      return userRoles;
+      return data?.map(r => r.role as UserRole) || [];
     } catch (error) {
       console.error('Error fetching user roles:', error);
       return [];
@@ -64,59 +57,58 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
+    let mounted = true;
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('=== AUTH STATE CHANGE DEBUG ===');
-        console.log('Auth state change event:', event);
-        console.log('Session:', session);
-        
+        if (!mounted) return;
+
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
           const userRoles = await fetchUserRoles(session.user.id);
-          setRoles(userRoles);
-          console.log('User roles set in context:', userRoles);
+          if (mounted) {
+            setRoles(userRoles);
+          }
         } else {
           setRoles([]);
-          console.log('No user, roles cleared');
         }
         
-        console.log('=== END AUTH STATE CHANGE DEBUG ===');
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     );
 
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log('=== INITIAL SESSION DEBUG ===');
-      console.log('Initial session:', session);
-      
+      if (!mounted) return;
+
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
         const userRoles = await fetchUserRoles(session.user.id);
-        setRoles(userRoles);
-        console.log('Initial user roles:', userRoles);
+        if (mounted) {
+          setRoles(userRoles);
+        }
       }
       
-      console.log('=== END INITIAL SESSION DEBUG ===');
-      setLoading(false);
+      if (mounted) {
+        setLoading(false);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const hasRole = (role: UserRole) => roles.includes(role);
   const isAdmin = roles.includes('admin');
-
-  console.log('=== AUTH CONTEXT CURRENT STATE ===');
-  console.log('Current user:', user?.id);
-  console.log('Current roles:', roles);
-  console.log('Is admin:', isAdmin);
-  console.log('=== END AUTH CONTEXT STATE ===');
 
   return (
     <AuthContext.Provider value={{ user, session, loading, roles, hasRole, isAdmin }}>
