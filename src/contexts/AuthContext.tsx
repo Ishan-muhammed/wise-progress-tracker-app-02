@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from "react-router-dom"; // Add navigation
 
 export type UserRole = 'teacher' | 'admin';
 
@@ -31,13 +32,16 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+// Move AuthProvider to its own named function for useNavigate
+const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<UserRole[]>([]);
+  const navigate = useNavigate();
 
-  const fetchUserRoles = async (userId: string) => {
+  // Fetch user roles from database
+  const fetchUserRoles = async (userId: string): Promise<UserRole[]> => {
     try {
       const { data, error } = await supabase
         .from('user_roles')
@@ -57,55 +61,68 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    let mounted = true;
+    let cancelled = false;
+    let loadingTimeout: ReturnType<typeof setTimeout> | null = null;
 
-    // Set up auth state listener
+    // Show loading max 7s, then force to not-loading & potentially redirect
+    loadingTimeout = setTimeout(() => {
+      if (!cancelled && loading) {
+        setLoading(false);
+        if (!user && !session) {
+          console.warn("[AuthContext] Timeout expired, redirecting to /auth due to no session/user.");
+          navigate('/auth');
+        }
+      }
+    }, 7000);
+
+    // Auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (!mounted) return;
+        if (cancelled) return;
 
         setSession(session);
         setUser(session?.user ?? null);
-        
         if (session?.user) {
           const userRoles = await fetchUserRoles(session.user.id);
-          if (mounted) {
-            setRoles(userRoles);
-          }
+          if (!cancelled) setRoles(userRoles);
         } else {
           setRoles([]);
         }
-        
-        if (mounted) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     );
 
-    // Get initial session
+    // Get session from Supabase
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!mounted) return;
-
+      if (cancelled) return;
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
         const userRoles = await fetchUserRoles(session.user.id);
-        if (mounted) {
-          setRoles(userRoles);
-        }
+        if (!cancelled) setRoles(userRoles);
       }
-      
-      if (mounted) {
-        setLoading(false);
-      }
+      setLoading(false);
+    }).catch((e) => {
+      if (!cancelled) setLoading(false);
+      console.error("[AuthContext] Error getting session:", e);
     });
 
     return () => {
-      mounted = false;
+      cancelled = true;
       subscription.unsubscribe();
+      if (loadingTimeout) clearTimeout(loadingTimeout);
     };
+    // only run on mount
+    // eslint-disable-next-line
   }, []);
+
+  // When loading finishes, but still no session/user, redirect to /auth
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/auth");
+    }
+  }, [loading, user, navigate]);
 
   const hasRole = (role: UserRole) => roles.includes(role);
   const isAdmin = roles.includes('admin');
@@ -116,3 +133,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     </AuthContext.Provider>
   );
 };
+
+// HOC to provide useNavigate
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <React.Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="text-lg">Loading...</div></div>}>
+      <AuthProviderImpl>{children}</AuthProviderImpl>
+    </React.Suspense>
+  );
+};
+
