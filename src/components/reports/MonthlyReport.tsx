@@ -8,13 +8,34 @@ import { useLessonsInDateRange } from "@/hooks/useLessonsInDateRange";
 // List of classes 8-12 only
 const ALL_CLASSES = ['8','9','10','11','12'];
 
+// Generate months and years for selection
+const MONTHS = [
+  { value: 0, label: 'January' },
+  { value: 1, label: 'February' },
+  { value: 2, label: 'March' },
+  { value: 3, label: 'April' },
+  { value: 4, label: 'May' },
+  { value: 5, label: 'June' },
+  { value: 6, label: 'July' },
+  { value: 7, label: 'August' },
+  { value: 8, label: 'September' },
+  { value: 9, label: 'October' },
+  { value: 10, label: 'November' },
+  { value: 11, label: 'December' }
+];
+
+// Generate years (current year and previous 2 years)
+const currentYear = new Date().getFullYear();
+const YEARS = [currentYear, currentYear - 1, currentYear - 2];
+
 const MonthlyReport = () => {
   const [selectedClass, setSelectedClass] = useState<string | "all">("all");
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   
-  // Get current month's lessons
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  // Calculate date range for selected month/year
+  const monthStart = new Date(selectedYear, selectedMonth, 1);
+  const monthEnd = new Date(selectedYear, selectedMonth + 1, 0);
   
   const monthStartStr = monthStart.toISOString().split('T')[0];
   const monthEndStr = monthEnd.toISOString().split('T')[0];
@@ -78,34 +99,78 @@ const MonthlyReport = () => {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <CardTitle>Monthly Report - {monthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</CardTitle>
         </div>
-        <div className="mt-4 flex flex-col md:flex-row gap-2 md:items-center">
-          <span className="text-muted-foreground text-sm">Filter by Class:</span>
-          <Select
-            value={selectedClass}
-            onValueChange={setSelectedClass}
-          >
-            <SelectTrigger className="max-w-xs">
-              <SelectValue>
-                {selectedClass === "all" ? "All Classes" : `Class ${selectedClass}`}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Classes</SelectItem>
-              {ALL_CLASSES.map(classVal => (
-                <SelectItem key={classVal} value={classVal}>
-                  Class {classVal}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="mt-4 flex flex-col md:flex-row gap-4 md:items-center">
+          <div className="flex flex-col md:flex-row gap-2 md:items-center">
+            <span className="text-muted-foreground text-sm">Select Month:</span>
+            <Select
+              value={selectedMonth.toString()}
+              onValueChange={(value) => setSelectedMonth(parseInt(value))}
+            >
+              <SelectTrigger className="max-w-xs">
+                <SelectValue>
+                  {MONTHS.find(m => m.value === selectedMonth)?.label}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {MONTHS.map(month => (
+                  <SelectItem key={month.value} value={month.value.toString()}>
+                    {month.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="flex flex-col md:flex-row gap-2 md:items-center">
+            <span className="text-muted-foreground text-sm">Select Year:</span>
+            <Select
+              value={selectedYear.toString()}
+              onValueChange={(value) => setSelectedYear(parseInt(value))}
+            >
+              <SelectTrigger className="max-w-xs">
+                <SelectValue>
+                  {selectedYear}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {YEARS.map(year => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="flex flex-col md:flex-row gap-2 md:items-center">
+            <span className="text-muted-foreground text-sm">Filter by Class:</span>
+            <Select
+              value={selectedClass}
+              onValueChange={setSelectedClass}
+            >
+              <SelectTrigger className="max-w-xs">
+                <SelectValue>
+                  {selectedClass === "all" ? "All Classes" : `Class ${selectedClass}`}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Classes</SelectItem>
+                {ALL_CLASSES.map(classVal => (
+                  <SelectItem key={classVal} value={classVal}>
+                    Class {classVal}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
         {Object.keys(summary).length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
             {selectedClass === "all" 
-              ? "No lessons recorded for this month."
-              : `No lessons recorded for Class ${selectedClass} this month.`
+              ? `No lessons recorded for ${monthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}.`
+              : `No lessons recorded for Class ${selectedClass} in ${monthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}.`
             }
           </p>
         ) : (
