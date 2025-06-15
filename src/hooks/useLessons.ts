@@ -38,7 +38,7 @@ export const useLessons = (dateFilter?: string) => {
   const [error, setError] = useState<string | null>(null);
   const { user, isAdmin } = useAuth();
 
-  const fetchLessons = useCallback(async () => {
+  const fetchLessons = useCallback(async (signal?: AbortSignal) => {
     if (!user) {
       setLessons([]);
       setLoading(false);
@@ -60,6 +60,8 @@ export const useLessons = (dateFilter?: string) => {
 
       const { data: lessonsData, error: lessonsError } = await query;
 
+      if (signal?.aborted) return;
+
       if (lessonsError) {
         setError('Failed to fetch lessons');
         setLessons([]);
@@ -80,6 +82,8 @@ export const useLessons = (dateFilter?: string) => {
         .select('id, name')
         .in('id', userIds);
 
+      if (signal?.aborted) return;
+
       if (profilesError) {
         console.error('Error fetching profile names:', profilesError);
       }
@@ -97,16 +101,27 @@ export const useLessons = (dateFilter?: string) => {
       setLessons(merged);
 
     } catch (err) {
-      console.error('Unexpected error fetching lessons:', err);
-      setError('An unexpected error occurred');
-      setLessons([]);
+      if (!(err instanceof DOMException && err.name === "AbortError")) {
+        console.error('Unexpected error fetching lessons:', err);
+        setError('An unexpected error occurred');
+        setLessons([]);
+      }
     } finally {
+      if (signal?.aborted) return;
       setLoading(false);
     }
   }, [dateFilter, user?.id, isAdmin]);
 
   useEffect(() => {
-    fetchLessons();
+    let cancelled = false;
+    const abortController = new AbortController();
+
+    fetchLessons(abortController.signal);
+
+    return () => {
+      cancelled = true;
+      abortController.abort();
+    };
   }, [fetchLessons]);
 
   return { lessons, loading, error, refetch: fetchLessons };
@@ -118,7 +133,7 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
   const [error, setError] = useState<string | null>(null);
   const { user, isAdmin } = useAuth();
 
-  const fetchLessons = useCallback(async () => {
+  const fetchLessons = useCallback(async (signal?: AbortSignal) => {
     if (!user || !startDate || !endDate) {
       setLessons([]);
       setLoading(false);
@@ -135,6 +150,8 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
         .gte('date', startDate)
         .lte('date', endDate)
         .order('date', { ascending: false });
+
+      if (signal?.aborted) return;
 
       if (lessonsError) {
         setError('Failed to fetch lessons');
@@ -155,6 +172,8 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
         .select('id, name')
         .in('id', userIds);
 
+      if (signal?.aborted) return;
+
       if (profilesError) {
         console.error('Error fetching profile names:', profilesError);
       }
@@ -171,16 +190,27 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
       setLessons(merged);
 
     } catch (err) {
-      console.error('Unexpected error fetching lessons:', err);
-      setError('An unexpected error occurred');
-      setLessons([]);
+      if (!(err instanceof DOMException && err.name === "AbortError")) {
+        console.error('Unexpected error fetching lessons:', err);
+        setError('An unexpected error occurred');
+        setLessons([]);
+      }
     } finally {
+      if (signal?.aborted) return;
       setLoading(false);
     }
   }, [startDate, endDate, user?.id, isAdmin]);
 
   useEffect(() => {
-    fetchLessons();
+    let cancelled = false;
+    const abortController = new AbortController();
+
+    fetchLessons(abortController.signal);
+
+    return () => {
+      cancelled = true;
+      abortController.abort();
+    };
   }, [fetchLessons]);
 
   return { lessons, loading, error };
