@@ -1,11 +1,9 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { RoleSelector } from "./RoleSelector";
 import { SubjectSelector } from "./SubjectSelector";
@@ -25,20 +23,20 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
   const [age, setAge] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+      console.log('AuthForm: Attempting login for:', email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        console.error('Login error:', error);
+        console.error('AuthForm: Login error:', error);
         toast({
           title: "Login Failed",
           description: error.message,
@@ -48,31 +46,16 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
       }
 
       if (data.user) {
+        console.log('AuthForm: Login successful for user:', data.user.id);
         toast({
           title: "Login Successful",
           description: "Welcome back!",
         });
         
-        // Get user roles to determine redirect
-        const { data: userRoles } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', data.user.id);
-        
-        const hasAdmin = userRoles?.some(r => r.role === 'admin');
-        const hasTeacher = userRoles?.some(r => r.role === 'teacher');
-        
-        // Redirect based on roles (admin takes precedence)
-        if (hasAdmin) {
-          navigate('/admin-dashboard');
-        } else if (hasTeacher) {
-          navigate('/teacher-dashboard');
-        } else {
-          navigate('/teacher-dashboard'); // Default fallback
-        }
+        // Don't navigate here - let AuthContext handle it
       }
     } catch (err) {
-      console.error('Unexpected login error:', err);
+      console.error('AuthForm: Unexpected login error:', err);
       toast({
         title: "Login Failed",
         description: "An unexpected error occurred. Please try again.",
@@ -124,7 +107,7 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
     }
     
     setIsLoading(true);
-    console.log('Starting signup process for:', email);
+    console.log('AuthForm: Starting signup process for:', email);
 
     try {
       const redirectUrl = `${window.location.origin}/`;
@@ -145,7 +128,7 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
       });
 
       if (error) {
-        console.error('Signup error:', error);
+        console.error('AuthForm: Signup error:', error);
         toast({
           title: "Signup Failed",
           description: error.message,
@@ -154,7 +137,7 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
         return;
       }
 
-      console.log('Signup successful, user ID:', data.user?.id);
+      console.log('AuthForm: Signup successful, user ID:', data.user?.id);
 
       // Insert additional roles if user selected multiple
       if (data.user && roles.length > 1) {
@@ -182,7 +165,7 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
       onToggleMode();
       
     } catch (err) {
-      console.error('Unexpected signup error:', err);
+      console.error('AuthForm: Unexpected signup error:', err);
       toast({
         title: "Signup Failed",
         description: "An unexpected error occurred. Please try again.",

@@ -32,7 +32,6 @@ export const useAuth = () => {
   return context;
 };
 
-// Move AuthProvider to its own named function for useNavigate
 const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -40,23 +39,23 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
   const [roles, setRoles] = useState<UserRole[]>([]);
   const navigate = useNavigate();
   
-  // Use refs to prevent unnecessary re-renders and track state
   const isUnmountedRef = useRef(false);
   const rolesCache = useRef<Record<string, UserRole[]>>({});
   const lastUserIdRef = useRef<string | null>(null);
+  const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       isUnmountedRef.current = true;
+      if (navigationTimeoutRef.current) {
+        clearTimeout(navigationTimeoutRef.current);
+      }
     };
   }, []);
 
-  // Fetch user roles from database with caching
   const fetchUserRoles = useCallback(async (userId: string): Promise<UserRole[]> => {
     if (isUnmountedRef.current) return [];
     
-    // Check cache first
     if (rolesCache.current[userId]) {
       return rolesCache.current[userId];
     }
@@ -73,10 +72,7 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
       }
 
       const userRoles = data?.map(r => r.role as UserRole) || [];
-      
-      // Cache the result
       rolesCache.current[userId] = userRoles;
-      
       return userRoles;
     } catch (error) {
       console.error('Error fetching user roles:', error);
@@ -84,28 +80,42 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-  // Stable navigation function
   const navigateToAppropriate = useCallback((userRoles: UserRole[], event: string) => {
     if (event !== 'SIGNED_IN') return;
     
     const currentPath = window.location.pathname;
-    if (currentPath === '/auth' || currentPath === '/') {
-      if (userRoles.includes('admin')) {
-        navigate('/admin-dashboard');
-      } else if (userRoles.includes('teacher')) {
-        navigate('/teacher-dashboard');
+    console.log('AuthContext: Navigating from:', currentPath, 'with roles:', userRoles);
+    
+    // Only navigate if we're on auth-related pages
+    if (currentPath === '/auth' || currentPath === '/' || currentPath === '/login') {
+      // Clear any existing navigation timeout
+      if (navigationTimeoutRef.current) {
+        clearTimeout(navigationTimeoutRef.current);
       }
+      
+      // Use timeout to prevent navigation conflicts
+      navigationTimeoutRef.current = setTimeout(() => {
+        if (userRoles.includes('admin')) {
+          console.log('AuthContext: Navigating to admin dashboard');
+          navigate('/admin-dashboard');
+        } else if (userRoles.includes('teacher')) {
+          console.log('AuthContext: Navigating to teacher dashboard');
+          navigate('/teacher-dashboard');
+        } else {
+          console.log('AuthContext: No valid roles, staying on current page');
+        }
+      }, 100);
     }
   }, [navigate]);
 
   useEffect(() => {
     let cancelled = false;
 
-    // Get initial session first
     const initializeAuth = async () => {
       if (cancelled || isUnmountedRef.current) return;
       
       try {
+        console.log('AuthContext: Initializing auth...');
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (cancelled || isUnmountedRef.current) return;
@@ -116,7 +126,7 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
-        console.log('Initial session:', session?.user?.id);
+        console.log('AuthContext: Initial session:', session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
 
@@ -124,6 +134,7 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
           lastUserIdRef.current = session.user.id;
           const userRoles = await fetchUserRoles(session.user.id);
           if (!cancelled && !isUnmountedRef.current) {
+            console.log('AuthContext: Setting roles:', userRoles);
             setRoles(userRoles);
           }
         } else if (!session?.user) {
@@ -142,18 +153,16 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    // Auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (cancelled || isUnmountedRef.current) return;
 
-        console.log('Auth state change:', event, session?.user?.id);
+        console.log('AuthContext: Auth state change:', event, session?.user?.id);
         
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Only fetch roles if user changed
           if (session.user.id !== lastUserIdRef.current) {
             lastUserIdRef.current = session.user.id;
             const userRoles = await fetchUserRoles(session.user.id);
@@ -166,16 +175,19 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
           lastUserIdRef.current = null;
           if (!cancelled && !isUnmountedRef.current) {
             setRoles([]);
-            // Only redirect to auth if user explicitly signed out
             if (event === 'SIGNED_OUT') {
               navigate('/auth');
             }
           }
         }
+        
+        // Ensure loading is set to false after auth state changes
+        if (!cancelled && !isUnmountedRef.current) {
+          setLoading(false);
+        }
       }
     );
 
-    // Initialize auth state
     initializeAuth();
 
     return () => {
@@ -187,7 +199,6 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
   const hasRole = useCallback((role: UserRole) => roles.includes(role), [roles]);
   const isAdmin = useCallback(() => roles.includes('admin'), [roles]);
 
-  // Memoize context value to prevent unnecessary re-renders
   const contextValue = React.useMemo(() => ({
     user,
     session,
@@ -204,7 +215,6 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// HOC to provide useNavigate
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <React.Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="text-lg">Loading...</div></div>}>

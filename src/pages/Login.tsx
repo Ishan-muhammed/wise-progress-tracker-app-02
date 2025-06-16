@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,16 +9,26 @@ const Login = () => {
   const { user, loading } = useAuth();
 
   useEffect(() => {
+    // Only redirect if user exists and loading is complete
+    // Let AuthContext handle the actual navigation logic based on roles
     if (!loading && user) {
-      // User is already logged in, redirect to appropriate dashboard
-      navigate("/teacher-dashboard");
+      console.log('Login: User detected, letting AuthContext handle navigation');
     }
-  }, [user, loading, navigate]);
+  }, [user, loading]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  // If user exists, show a brief message while AuthContext handles navigation
+  if (user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Redirecting...</div>
       </div>
     );
   }
