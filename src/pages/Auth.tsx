@@ -1,10 +1,41 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AuthForm } from "@/components/auth/AuthForm";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const navigate = useNavigate();
+  const { user, loading, error, roles } = useAuth();
+
+  useEffect(() => {
+    console.log('Auth page - User:', !!user, 'Loading:', loading, 'Roles:', roles, 'Error:', error);
+    
+    // Only navigate if user exists, has roles, and not loading
+    if (!loading && user && roles.length > 0) {
+      console.log('Auth: User detected with roles, navigating...');
+      if (roles.includes('admin')) {
+        console.log('Navigating to admin dashboard');
+        navigate('/admin-dashboard', { replace: true });
+      } else if (roles.includes('teacher')) {
+        console.log('Navigating to teacher dashboard');
+        navigate('/teacher-dashboard', { replace: true });
+      }
+    }
+  }, [user, loading, roles, navigate, error]);
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg mb-2">Loading...</div>
+          <div className="text-sm text-gray-500">Signing you in...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
