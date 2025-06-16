@@ -10,56 +10,70 @@ const activeRequests = new Map<string, Promise<UserRole[]>>();
 
 export const useAuthRoles = (isUnmountedRef: React.RefObject<boolean>) => {
   const retryCountRef = useRef<number>(0);
-  const maxRetries = 3;
+  const maxRetries = 2; // Reduced retries to prevent long waits
+  const ROLE_FETCH_TIMEOUT = 10000; // 10 seconds timeout for role fetching
 
   const fetchUserRoles = useCallback(async (userId: string): Promise<UserRole[]> => {
-    if (isUnmountedRef.current) return [];
+    if (isUnmountedRef.current) {
+      console.log('useAuthRoles: Component unmounted, aborting role fetch');
+      return [];
+    }
     
-    console.log('Fetching roles for user:', userId);
+    console.log('useAuthRoles: Fetching roles for user:', userId);
 
     // Check cache first
     const cached = roleCache.get(userId);
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      console.log('Using cached roles:', cached.roles);
+      console.log('useAuthRoles: Using cached roles:', cached.roles);
       return cached.roles;
     }
 
     // Check if there's already an active request for this user
     const existingRequest = activeRequests.get(userId);
     if (existingRequest) {
-      console.log('Using existing role request for user:', userId);
+      console.log('useAuthRoles: Using existing role request for user:', userId);
       return existingRequest;
     }
 
     const fetchRolesWithRetry = async (attempt: number = 1): Promise<UserRole[]> => {
       try {
-        console.log(`Role fetch attempt ${attempt} for user:`, userId);
+        console.log(`useAuthRoles: Role fetch attempt ${attempt} for user:`, userId);
 
-        const { data, error } = await supabase
+        // Create a timeout promise
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('Role fetch timeout')), ROLE_FETCH_TIMEOUT);
+        });
+
+        // Race between the actual fetch and timeout
+        const fetchPromise = supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', userId);
 
+        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+
         if (error) {
-          console.error(`Error fetching user roles (attempt ${attempt}):`, error);
+          console.error(`useAuthRoles: Error fetching user roles (attempt ${attempt}):`, error);
           
           // Retry on specific errors
           if (attempt < maxRetries && (
             error.message.includes('timeout') || 
             error.message.includes('connection') ||
-            error.code === 'PGRST301'
+            error.code === 'PGRST301' ||
+            error.message.includes('Role fetch timeout')
           )) {
-            console.log(`Retrying role fetch in ${attempt * 1000}ms...`);
+            console.log(`useAuthRoles: Retrying role fetch in ${attempt * 1000}ms...`);
             await new Promise(resolve => setTimeout(resolve, attempt * 1000));
             return fetchRolesWithRetry(attempt + 1);
           }
           
           // Return empty array instead of throwing to prevent blocking
+          console.warn('useAuthRoles: Returning empty roles due to error');
           return [];
         }
 
         const roles = data?.map(r => r.role as UserRole) || [];
-        console.log('Roles fetched successfully:', roles);
+        console.log('useAuthRoles: Roles fetched successfully:', roles);
         
         // Cache the result
         roleCache.set(userId, { roles, timestamp: Date.now() });
@@ -67,15 +81,16 @@ export const useAuthRoles = (isUnmountedRef: React.RefObject<boolean>) => {
         
         return roles;
       } catch (error) {
-        console.error(`Exception fetching user roles (attempt ${attempt}):`, error);
+        console.error(`useAuthRoles: Exception fetching user roles (attempt ${attempt}):`, error);
         
         if (attempt < maxRetries) {
-          console.log(`Retrying role fetch in ${attempt * 1000}ms...`);
+          console.log(`useAuthRoles: Retrying role fetch in ${attempt * 1000}ms...`);
           await new Promise(resolve => setTimeout(resolve, attempt * 1000));
           return fetchRolesWithRetry(attempt + 1);
         }
         
         // Return empty array instead of throwing to prevent blocking
+        console.warn('useAuthRoles: Returning empty roles due to exception');
         return [];
       }
     };
@@ -91,13 +106,15 @@ export const useAuthRoles = (isUnmountedRef: React.RefObject<boolean>) => {
       // Clean up the active request
       activeRequests.delete(userId);
     }
-  }, [isUnmountedRef, maxRetries]);
+  }, [isUnmountedRef, maxRetries, ROLE_FETCH_TIMEOUT]);
 
   const clearRoleCache = useCallback((userId?: string) => {
     if (userId) {
+      console.log('useAuthRoles: Clearing role cache for user:', userId);
       roleCache.delete(userId);
       activeRequests.delete(userId);
     } else {
+      console.log('useAuthRoles: Clearing all role cache');
       roleCache.clear();
       activeRequests.clear();
     }

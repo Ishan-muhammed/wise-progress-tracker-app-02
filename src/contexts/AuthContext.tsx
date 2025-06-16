@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthState } from '@/hooks/useAuthState';
@@ -51,99 +51,168 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
   } = useAuthState();
 
   const { fetchUserRoles, clearRoleCache } = useAuthRoles(isUnmountedRef);
+  const authTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const initializationStarted = useRef(false);
+
+  // Maximum time to wait for authentication initialization
+  const AUTH_TIMEOUT = 15000; // 15 seconds
 
   const logout = useCallback(async () => {
-    console.log('Logging out user');
+    console.log('AuthContext: Logging out user');
     setIsExplicitLogin(false);
     clearRoleCache();
     const { error } = await supabase.auth.signOut();
     if (error) {
-      console.error('Logout error:', error);
+      console.error('AuthContext: Logout error:', error);
     }
   }, [setIsExplicitLogin, clearRoleCache]);
 
   const setExplicitLogin = useCallback((value: boolean) => {
-    console.log('Setting explicit login:', value);
+    console.log('AuthContext: Setting explicit login:', value);
     setIsExplicitLogin(value);
   }, [setIsExplicitLogin]);
 
   const handleAuthStateChange = useCallback(async (event: string, session: Session | null) => {
-    if (isUnmountedRef.current) return;
+    if (isUnmountedRef.current) {
+      console.log('AuthContext: Component unmounted, skipping auth state change');
+      return;
+    }
 
-    console.log('Auth state change:', event, session?.user?.id || 'No session');
+    console.log('AuthContext: Auth state change:', event, session?.user?.id || 'No session');
     
     setSession(session);
     setUser(session?.user ?? null);
     setError(null);
     
     if (session?.user) {
-      console.log('User authenticated, checking roles...');
+      console.log('AuthContext: User authenticated, checking roles...');
       
       // Set explicit login flag for SIGNED_IN events (not for initial session restoration)
       if (event === 'SIGNED_IN') {
-        console.log('Setting explicit login to true for SIGNED_IN event');
+        console.log('AuthContext: Setting explicit login to true for SIGNED_IN event');
         setIsExplicitLogin(true);
       }
       
       // Only fetch roles if we haven't already fetched them for this user
       if (!hasRolesFetched(session.user.id)) {
         try {
-          console.log('Fetching roles for user:', session.user.id);
+          console.log('AuthContext: Fetching roles for user:', session.user.id);
           const userRoles = await fetchUserRoles(session.user.id);
-          console.log('Roles fetched successfully:', userRoles);
+          console.log('AuthContext: Roles fetched successfully:', userRoles);
           
           if (!isUnmountedRef.current) {
             setRoles(userRoles, session.user.id);
             setLoading(false);
+            
+            // Clear auth timeout since we successfully loaded
+            if (authTimeoutRef.current) {
+              clearTimeout(authTimeoutRef.current);
+              authTimeoutRef.current = null;
+            }
           }
         } catch (error) {
-          console.error('Role fetch error:', error);
+          console.error('AuthContext: Role fetch error:', error);
           if (!isUnmountedRef.current) {
-            // Don't clear existing roles on fetch error, just set loading to false
+            // Set empty roles and stop loading on error
+            setRoles([], session.user.id);
             setLoading(false);
+            
+            // Clear auth timeout
+            if (authTimeoutRef.current) {
+              clearTimeout(authTimeoutRef.current);
+              authTimeoutRef.current = null;
+            }
           }
         }
       } else {
-        console.log('Roles already fetched for user:', session.user.id);
+        console.log('AuthContext: Roles already fetched for user:', session.user.id);
         setLoading(false);
+        
+        // Clear auth timeout
+        if (authTimeoutRef.current) {
+          clearTimeout(authTimeoutRef.current);
+          authTimeoutRef.current = null;
+        }
       }
     } else {
       if (!isUnmountedRef.current) {
         setRoles([]);
         setLoading(false);
         setIsExplicitLogin(false);
+        
+        // Clear auth timeout
+        if (authTimeoutRef.current) {
+          clearTimeout(authTimeoutRef.current);
+          authTimeoutRef.current = null;
+        }
       }
     }
   }, [fetchUserRoles, setSession, setUser, setError, setRoles, setLoading, isUnmountedRef, setIsExplicitLogin, hasRolesFetched]);
 
   const retry = useCallback(() => {
-    console.log('Retrying authentication');
+    console.log('AuthContext: Retrying authentication');
     setError(null);
     setLoading(true);
     
+    // Set up timeout for retry
+    authTimeoutRef.current = setTimeout(() => {
+      if (!isUnmountedRef.current) {
+        console.error('AuthContext: Retry timeout reached');
+        setError('Authentication timeout. Please try signing in again.');
+        setLoading(false);
+      }
+    }, AUTH_TIMEOUT);
+    
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
-        console.error('Retry session error:', error);
-        setError('Failed to reconnect. Please sign in again.');
-        setLoading(false);
+        console.error('AuthContext: Retry session error:', error);
+        if (!isUnmountedRef.current) {
+          setError('Failed to reconnect. Please sign in again.');
+          setLoading(false);
+          
+          if (authTimeoutRef.current) {
+            clearTimeout(authTimeoutRef.current);
+            authTimeoutRef.current = null;
+          }
+        }
       } else {
         handleAuthStateChange('RETRY', session);
       }
     });
-  }, [handleAuthStateChange, setError, setLoading]);
+  }, [handleAuthStateChange, setError, setLoading, isUnmountedRef, AUTH_TIMEOUT]);
 
   useEffect(() => {
-    console.log('Setting up auth state listener');
+    if (initializationStarted.current) {
+      console.log('AuthContext: Initialization already started, skipping');
+      return;
+    }
+    
+    initializationStarted.current = true;
+    console.log('AuthContext: Setting up auth state listener');
+    
+    // Set up auth timeout
+    authTimeoutRef.current = setTimeout(() => {
+      if (!isUnmountedRef.current) {
+        console.error('AuthContext: Auth initialization timeout reached');
+        setError('Authentication timeout. Please try signing in.');
+        setLoading(false);
+      }
+    }, AUTH_TIMEOUT);
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
-        console.error('Initial session error:', error);
+        console.error('AuthContext: Initial session error:', error);
         if (!isUnmountedRef.current) {
           setError('Authentication service unavailable. Please try signing in.');
           setLoading(false);
+          
+          if (authTimeoutRef.current) {
+            clearTimeout(authTimeoutRef.current);
+            authTimeoutRef.current = null;
+          }
         }
       } else {
         // Don't set explicit login for initial session restoration
@@ -152,10 +221,15 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => {
-      console.log('Cleaning up auth subscription');
+      console.log('AuthContext: Cleaning up auth subscription');
       subscription.unsubscribe();
+      
+      if (authTimeoutRef.current) {
+        clearTimeout(authTimeoutRef.current);
+        authTimeoutRef.current = null;
+      }
     };
-  }, [handleAuthStateChange, isUnmountedRef, setError, setLoading]);
+  }, [handleAuthStateChange, isUnmountedRef, setError, setLoading, AUTH_TIMEOUT]);
 
   const contextValue = React.useMemo(() => ({
     user,
