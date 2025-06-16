@@ -1,14 +1,13 @@
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useTeacherProfiles } from "@/hooks/useTeacherProfiles";
 import { useLessons } from "@/hooks/useLessons";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, Edit, MoreHorizontal, RefreshCw, Mail, BookOpen, Users, LayoutGrid, List } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Download, RefreshCw, LayoutGrid, List } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import TeacherStatistics from "./teacher-management/TeacherStatistics";
+import TeacherDirectory from "./teacher-management/TeacherDirectory";
 
 const TeacherManagement = () => {
   const { profiles: teachers, loading: teachersLoading, error: teachersError, refetch } = useTeacherProfiles();
@@ -145,47 +144,12 @@ const TeacherManagement = () => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Teachers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{teachers.length}</div>
-            <p className="text-xs text-gray-500">Registered in system</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Subjects</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{totalSubjects}</div>
-            <p className="text-xs text-gray-500">Being taught</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Classes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{totalClasses}</div>
-            <p className="text-xs text-gray-500">In the system</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Avg. Completion Rate</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{avgCompletionRate}%</div>
-            <p className="text-xs text-gray-500">Across all teachers</p>
-          </CardContent>
-        </Card>
-      </div>
+      <TeacherStatistics
+        totalTeachers={teachers.length}
+        totalSubjects={totalSubjects}
+        totalClasses={totalClasses}
+        avgCompletionRate={avgCompletionRate}
+      />
 
       {/* View Mode Toggle */}
       <div className="flex justify-end">
@@ -209,119 +173,8 @@ const TeacherManagement = () => {
         </div>
       </div>
 
-      {/* Teacher Cards/Directory */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Teacher Directory ({teachers.length} teachers)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {teacherStats.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500 mb-4">No teachers found.</p>
-              <Button onClick={handleRefresh} variant="outline">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh Data
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {teacherStats.map((teacher) => (
-                <Card key={teacher.id} className="hover:shadow-lg transition-shadow duration-200">
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg text-gray-900">{teacher.name}</h3>
-                        <div className="flex items-center text-sm text-gray-600 mt-1">
-                          <Mail className="h-4 w-4 mr-1" />
-                          {teacher.email}
-                        </div>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit Profile
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            Reset Password
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent className="space-y-4">
-                    {/* Demographics */}
-                    {(teacher.gender || teacher.age) && (
-                      <div className="text-sm text-gray-600">
-                        {teacher.gender && <span>Gender: {teacher.gender}</span>}
-                        {teacher.gender && teacher.age && <span> • </span>}
-                        {teacher.age && <span>Age: {teacher.age}</span>}
-                      </div>
-                    )}
-
-                    {/* Subjects */}
-                    <div>
-                      <div className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                        <BookOpen className="h-4 w-4 mr-1" />
-                        Subjects ({teacher.subjects.length})
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {teacher.subjects.length > 0 ? (
-                          teacher.subjects.slice(0, 3).map(subject => (
-                            <Badge key={subject} variant="secondary" className="text-xs">
-                              {subject}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className="text-gray-400 text-sm">No subjects assigned</span>
-                        )}
-                        {teacher.subjects.length > 3 && (
-                          <Badge variant="secondary" className="text-xs">
-                            +{teacher.subjects.length - 3} more
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Assigned Classes */}
-                    <div>
-                      <div className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                        <Users className="h-4 w-4 mr-1" />
-                        Classes ({teacher.classes.length})
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {teacher.classes.length > 0 ? (
-                          teacher.classes.slice(0, 4).map(cls => (
-                            <Badge key={cls} variant="outline" className="text-xs">
-                              Class {cls}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className="text-gray-400 text-sm">No classes assigned</span>
-                        )}
-                        {teacher.classes.length > 4 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{teacher.classes.length - 4} more
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Teacher Directory */}
+      <TeacherDirectory teachers={teacherStats} onRefresh={handleRefresh} />
     </div>
   );
 };
