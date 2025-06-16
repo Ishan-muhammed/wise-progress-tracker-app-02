@@ -45,7 +45,30 @@ export const useTeacherProfiles = () => {
 
       console.log('Fetching teacher profiles...');
 
-      // Use proper JOIN syntax instead of the problematic nested select
+      // First, get all teacher user IDs
+      const { data: teacherRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'teacher');
+
+      if (signal.aborted || isUnmountedRef.current) return;
+
+      if (rolesError) {
+        console.error('Error fetching teacher roles:', rolesError);
+        setError(`Failed to fetch teacher roles: ${rolesError.message}`);
+        return;
+      }
+
+      if (!teacherRoles || teacherRoles.length === 0) {
+        console.log('No teachers found in user_roles table');
+        setProfiles([]);
+        return;
+      }
+
+      const teacherIds = teacherRoles.map(role => role.user_id);
+      console.log('Found teacher IDs:', teacherIds);
+
+      // Now get the profiles for these teachers
       const { data, error } = await supabase
         .from('profiles')
         .select(`
@@ -55,12 +78,7 @@ export const useTeacherProfiles = () => {
           gender, 
           age
         `)
-        .in('id', 
-          supabase
-            .from('user_roles')
-            .select('user_id')
-            .eq('role', 'teacher')
-        );
+        .in('id', teacherIds);
 
       if (signal.aborted || isUnmountedRef.current) return;
 
