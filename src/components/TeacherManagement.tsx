@@ -1,48 +1,20 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTeacherProfiles } from "@/hooks/useTeacherProfiles";
 import { useLessons } from "@/hooks/useLessons";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Filter, Download, UserPlus, Edit, MoreHorizontal, RefreshCw, Mail, BookOpen, Users, Calendar, LayoutGrid, List } from "lucide-react";
+import { Download, Edit, MoreHorizontal, RefreshCw, Mail, BookOpen, Users, LayoutGrid, List } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 
 const TeacherManagement = () => {
   const { profiles: teachers, loading: teachersLoading, error: teachersError, refetch } = useTeacherProfiles();
   const { lessons, loading: lessonsLoading } = useLessons();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterRole, setFilterRole] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   const { toast } = useToast();
-
-  // Calculate teacher activity status
-  const getTeacherStatus = (teacherId: string) => {
-    const teacherLessons = lessons.filter(lesson => lesson.user_id === teacherId);
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    const recentLessons = teacherLessons.filter(lesson => 
-      new Date(lesson.date) >= thirtyDaysAgo
-    );
-    
-    return recentLessons.length > 0 ? 'active' : 'inactive';
-  };
-
-  // Filter teachers based on search and filters
-  const filteredTeachers = teachers.filter(teacher => {
-    const matchesSearch = teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         teacher.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const status = getTeacherStatus(teacher.id);
-    const matchesStatus = filterStatus === "all" || status === filterStatus;
-    
-    return matchesSearch && matchesStatus;
-  });
 
   const handleRefresh = () => {
     refetch();
@@ -54,7 +26,7 @@ const TeacherManagement = () => {
 
   const handleExportData = () => {
     // Create CSV data
-    const csvData = filteredTeachers.map(teacher => {
+    const csvData = teachers.map(teacher => {
       const teacherLessons = lessons.filter(lesson => lesson.user_id === teacher.id);
       const completedLessons = teacherLessons.filter(lesson => lesson.completed);
       const subjects = [...new Set(teacherLessons.map(lesson => lesson.subject))];
@@ -125,8 +97,12 @@ const TeacherManagement = () => {
     );
   }
 
-  // Calculate teacher statistics
-  const teacherStats = filteredTeachers.map(teacher => {
+  // Calculate statistics
+  const totalSubjects = [...new Set(lessons.map(lesson => lesson.subject))].length;
+  const totalClasses = [...new Set(lessons.map(lesson => lesson.class))].length;
+
+  // Calculate teacher statistics for completion rate
+  const teacherStats = teachers.map(teacher => {
     const teacherLessons = lessons.filter(lesson => lesson.user_id === teacher.id);
     const completedLessons = teacherLessons.filter(lesson => lesson.completed);
     const totalLessons = teacherLessons.length;
@@ -135,11 +111,6 @@ const TeacherManagement = () => {
     const classes = [...new Set(teacherLessons.map(lesson => lesson.class))].sort((a, b) => 
       parseInt(a) - parseInt(b)
     );
-    const status = getTeacherStatus(teacher.id);
-
-    // Get last active date
-    const sortedLessons = teacherLessons.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    const lastActiveDate = sortedLessons.length > 0 ? new Date(sortedLessons[0].date) : null;
 
     return {
       ...teacher,
@@ -147,11 +118,12 @@ const TeacherManagement = () => {
       completedLessons: completedLessons.length,
       completionRate,
       subjects,
-      classes,
-      status,
-      lastActiveDate
+      classes
     };
   });
+
+  const avgCompletionRate = teacherStats.length > 0 ? 
+    Math.round(teacherStats.reduce((acc, t) => acc + t.completionRate, 0) / teacherStats.length) : 0;
 
   return (
     <div className="space-y-6">
@@ -169,10 +141,6 @@ const TeacherManagement = () => {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button size="sm">
-            <UserPlus className="h-4 w-4 mr-2" />
-            Invite Teacher
-          </Button>
         </div>
       </div>
 
@@ -184,29 +152,27 @@ const TeacherManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{teachers.length}</div>
-            <p className="text-xs text-gray-500">Active in system</p>
+            <p className="text-xs text-gray-500">Registered in system</p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Active Teachers</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Total Subjects</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {teacherStats.filter(t => t.status === 'active').length}
-            </div>
-            <p className="text-xs text-gray-500">Last 30 days</p>
+            <div className="text-2xl font-bold text-blue-600">{totalSubjects}</div>
+            <p className="text-xs text-gray-500">Being taught</p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Lessons</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Total Classes</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{lessons.length}</div>
-            <p className="text-xs text-gray-500">All time</p>
+            <div className="text-2xl font-bold text-purple-600">{totalClasses}</div>
+            <p className="text-xs text-gray-500">In the system</p>
           </CardContent>
         </Card>
 
@@ -215,67 +181,43 @@ const TeacherManagement = () => {
             <CardTitle className="text-sm font-medium text-gray-600">Avg. Completion Rate</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {teacherStats.length > 0 ? Math.round(teacherStats.reduce((acc, t) => acc + t.completionRate, 0) / teacherStats.length) : 0}%
-            </div>
+            <div className="text-2xl font-bold">{avgCompletionRate}%</div>
             <p className="text-xs text-gray-500">Across all teachers</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Search and Filter Controls */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder="Search teachers by name or email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <div className="flex gap-2">
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-[140px]">
-              <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-          <div className="flex border rounded-md">
-            <Button
-              variant={viewMode === "cards" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("cards")}
-              className="rounded-r-none"
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "table" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("table")}
-              className="rounded-l-none"
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
+      {/* View Mode Toggle */}
+      <div className="flex justify-end">
+        <div className="flex border rounded-md">
+          <Button
+            variant={viewMode === "cards" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("cards")}
+            className="rounded-r-none"
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === "table" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("table")}
+            className="rounded-l-none"
+          >
+            <List className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
       {/* Teacher Cards/Directory */}
       <Card>
         <CardHeader>
-          <CardTitle>Teacher Directory ({filteredTeachers.length} teachers)</CardTitle>
+          <CardTitle>Teacher Directory ({teachers.length} teachers)</CardTitle>
         </CardHeader>
         <CardContent>
           {teacherStats.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500 mb-4">No teachers found matching your criteria.</p>
+              <p className="text-gray-500 mb-4">No teachers found.</p>
               <Button onClick={handleRefresh} variant="outline">
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Refresh Data
@@ -294,33 +236,25 @@ const TeacherManagement = () => {
                           {teacher.email}
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <Badge 
-                          variant={teacher.status === 'active' ? 'default' : 'secondary'}
-                          className={teacher.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}
-                        >
-                          {teacher.status === 'active' ? 'Active' : 'Inactive'}
-                        </Badge>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit Profile
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              Reset Password
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit Profile
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            Reset Password
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </CardHeader>
                   
@@ -378,33 +312,6 @@ const TeacherManagement = () => {
                           <Badge variant="outline" className="text-xs">
                             +{teacher.classes.length - 4} more
                           </Badge>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Performance Stats */}
-                    <div className="border-t pt-3">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium text-gray-700">Performance</span>
-                        <span className="text-sm font-semibold">{teacher.completionRate}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                        <div 
-                          className={`h-2 rounded-full transition-all duration-300 ${
-                            teacher.completionRate >= 80 ? 'bg-green-600' :
-                            teacher.completionRate >= 60 ? 'bg-yellow-500' :
-                            'bg-red-500'
-                          }`}
-                          style={{ width: `${teacher.completionRate}%` }}
-                        ></div>
-                      </div>
-                      <div className="flex justify-between text-xs text-gray-600">
-                        <span>{teacher.completedLessons}/{teacher.totalLessons} lessons</span>
-                        {teacher.lastActiveDate && (
-                          <span className="flex items-center">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            {teacher.lastActiveDate.toLocaleDateString()}
-                          </span>
                         )}
                       </div>
                     </div>
