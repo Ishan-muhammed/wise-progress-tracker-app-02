@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Lesson } from '@/types/lesson';
@@ -10,13 +10,45 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user, isAdmin } = useAuth();
+  
+  // Use refs to track current values without causing re-renders
+  const currentStartDate = useRef(startDate);
+  const currentEndDate = useRef(endDate);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const isUnmountedRef = useRef(false);
 
-  const fetchLessons = useCallback(async (signal?: AbortSignal) => {
-    if (!user || !startDate || !endDate) {
+  // Update refs when dates change
+  useEffect(() => {
+    currentStartDate.current = startDate;
+    currentEndDate.current = endDate;
+  }, [startDate, endDate]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isUnmountedRef.current = true;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
+  const fetchLessons = useCallback(async () => {
+    // Don't fetch if component is unmounted or required data is missing
+    if (isUnmountedRef.current || !user || !currentStartDate.current || !currentEndDate.current) {
       setLessons([]);
       setLoading(false);
       return;
     }
+
+    // Abort previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new abort controller
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
 
     try {
       setLoading(true);
@@ -25,22 +57,20 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
       const { data: lessonsData, error: lessonsError } = await supabase
         .from('lessons')
         .select('*')
-        .gte('date', startDate)
-        .lte('date', endDate)
+        .gte('date', currentStartDate.current)
+        .lte('date', currentEndDate.current)
         .order('date', { ascending: false });
 
-      if (signal?.aborted) return;
+      if (signal.aborted || isUnmountedRef.current) return;
 
       if (lessonsError) {
         setError('Failed to fetch lessons');
         setLessons([]);
-        setLoading(false);
         return;
       }
 
       if (!lessonsData || lessonsData.length === 0) {
         setLessons([]);
-        setLoading(false);
         return;
       }
 
@@ -50,36 +80,36 @@ export const useLessonsInDateRange = (startDate: string, endDate: string) => {
       // Fetch profiles for all lesson user_ids
       const profileMap = await fetchLessonProfiles(userIds, signal);
 
-      if (signal?.aborted) return;
-      if (!profileMap) return;
+      if (signal.aborted || isUnmountedRef.current || !profileMap) return;
 
       const merged = mergeProfiles(lessonsData as Lesson[], profileMap);
-      setLessons(merged);
+      
+      if (!isUnmountedRef.current) {
+        setLessons(merged);
+      }
 
     } catch (err) {
-      if (!(err instanceof DOMException && err.name === "AbortError")) {
+      if (!(err instanceof DOMException && err.name === "AbortError") && !isUnmountedRef.current) {
         console.error('Unexpected error fetching lessons:', err);
         setError('An unexpected error occurred');
         setLessons([]);
       }
     } finally {
-      if (signal?.aborted) return;
+      if (!isUnmountedRef.current) {
+        setLoading(false);
+      }
+    }
+  }, [user?.id, isAdmin]); // Removed date dependencies to prevent infinite loops
+
+  // Effect to trigger fetch when dependencies change
+  useEffect(() => {
+    if (user && startDate && endDate) {
+      fetchLessons();
+    } else {
+      setLessons([]);
       setLoading(false);
     }
-  }, [startDate, endDate, user?.id, isAdmin]);
-
-  useEffect(() => {
-    // Reset states immediately when dependencies change
-    setLoading(true);
-    setError(null);
-    
-    const abortController = new AbortController();
-    fetchLessons(abortController.signal);
-
-    return () => {
-      abortController.abort();
-    };
-  }, [fetchLessons]);
+  }, [fetchLessons, startDate, endDate]); // dates here are safe since fetchLessons doesn't depend on them
 
   return { lessons, loading, error };
 };

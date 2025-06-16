@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { formatDateToString } from "@/utils/dateUtils";
@@ -22,16 +22,27 @@ const ALL_CLASSES = ['8','9','10','11','12'];
 const DailyReport = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedClass, setSelectedClass] = useState<string | "all">("all");
-  const { user, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
 
-  const selectedDateStr = formatDateToString(selectedDate);
+  const selectedDateStr = useMemo(() => formatDateToString(selectedDate), [selectedDate]);
   const { lessons, loading, error } = useLessons(selectedDateStr);
 
-  // Filter lessons as per selected class
+  // Filter lessons as per selected class - memoized to prevent unnecessary re-renders
   const filteredLessons = useMemo(() => {
     if (selectedClass === "all") return lessons;
     return lessons.filter((lesson) => lesson.class === selectedClass);
   }, [lessons, selectedClass]);
+
+  // Memoized date selection handler
+  const handleDateSelect = useCallback((date: Date) => {
+    setSelectedDate(date);
+    setSelectedClass("all"); // Reset class filter on date change
+  }, []);
+
+  // Memoized class change handler
+  const handleClassChange = useCallback((value: string) => {
+    setSelectedClass(value);
+  }, []);
 
   return (
     <Card>
@@ -51,10 +62,7 @@ const DailyReport = () => {
             </div>
             <DatePicker 
               selectedDate={selectedDate} 
-              onDateSelect={date => {
-                setSelectedDate(date);
-                setSelectedClass("all"); // Reset class filter on date change
-              }} 
+              onDateSelect={handleDateSelect} 
             />
           </div>
         </div>
@@ -62,7 +70,7 @@ const DailyReport = () => {
           <span className="text-muted-foreground text-sm">Filter by Class:</span>
           <Select
             value={selectedClass}
-            onValueChange={setSelectedClass}
+            onValueChange={handleClassChange}
           >
             <SelectTrigger className="max-w-xs">
               <SelectValue>

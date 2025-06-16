@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Lesson } from '@/types/lesson';
@@ -10,13 +10,43 @@ export const useLessons = (dateFilter?: string) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user, isAdmin } = useAuth();
+  
+  // Use refs to track current values without causing re-renders
+  const currentDateFilter = useRef(dateFilter);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const isUnmountedRef = useRef(false);
 
-  const fetchLessons = useCallback(async (signal?: AbortSignal) => {
-    if (!user) {
+  // Update ref when dateFilter changes
+  useEffect(() => {
+    currentDateFilter.current = dateFilter;
+  }, [dateFilter]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isUnmountedRef.current = true;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
+  const fetchLessons = useCallback(async () => {
+    // Don't fetch if component is unmounted
+    if (isUnmountedRef.current || !user) {
       setLessons([]);
       setLoading(false);
       return;
     }
+
+    // Abort previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new abort controller
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
 
     try {
       setLoading(true);
@@ -27,24 +57,22 @@ export const useLessons = (dateFilter?: string) => {
         .select('*')
         .order('date', { ascending: false });
 
-      if (dateFilter) {
-        query = query.eq('date', dateFilter);
+      if (currentDateFilter.current) {
+        query = query.eq('date', currentDateFilter.current);
       }
 
       const { data: lessonsData, error: lessonsError } = await query;
 
-      if (signal?.aborted) return;
+      if (signal.aborted || isUnmountedRef.current) return;
 
       if (lessonsError) {
         setError('Failed to fetch lessons');
         setLessons([]);
-        setLoading(false);
         return;
       }
 
       if (!lessonsData || lessonsData.length === 0) {
         setLessons([]);
-        setLoading(false);
         return;
       }
 
@@ -54,37 +82,37 @@ export const useLessons = (dateFilter?: string) => {
       // Fetch profiles for all lesson user_ids
       const profileMap = await fetchLessonProfiles(userIds, signal);
 
-      if (signal?.aborted) return;
-      if (!profileMap) return;
+      if (signal.aborted || isUnmountedRef.current || !profileMap) return;
 
       // Merge teacher name into each lesson
       const merged = mergeProfiles(lessonsData as Lesson[], profileMap);
-      setLessons(merged);
+      
+      if (!isUnmountedRef.current) {
+        setLessons(merged);
+      }
 
     } catch (err) {
-      if (!(err instanceof DOMException && err.name === "AbortError")) {
+      if (!(err instanceof DOMException && err.name === "AbortError") && !isUnmountedRef.current) {
         console.error('Unexpected error fetching lessons:', err);
         setError('An unexpected error occurred');
         setLessons([]);
       }
     } finally {
-      if (signal?.aborted) return;
+      if (!isUnmountedRef.current) {
+        setLoading(false);
+      }
+    }
+  }, [user?.id, isAdmin]); // Removed dateFilter from dependencies to prevent infinite loops
+
+  // Effect to trigger fetch when dependencies change
+  useEffect(() => {
+    if (user) {
+      fetchLessons();
+    } else {
+      setLessons([]);
       setLoading(false);
     }
-  }, [dateFilter, user?.id, isAdmin]);
-
-  useEffect(() => {
-    // Reset states immediately when dependencies change
-    setLoading(true);
-    setError(null);
-    
-    const abortController = new AbortController();
-    fetchLessons(abortController.signal);
-
-    return () => {
-      abortController.abort();
-    };
-  }, [fetchLessons]);
+  }, [fetchLessons, dateFilter]); // dateFilter here is safe since fetchLessons doesn't depend on it
 
   return { lessons, loading, error, refetch: fetchLessons };
 };

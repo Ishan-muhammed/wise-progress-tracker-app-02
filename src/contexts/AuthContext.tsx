@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from "react-router-dom";
@@ -39,9 +39,28 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<UserRole[]>([]);
   const navigate = useNavigate();
+  
+  // Use refs to prevent unnecessary re-renders and track state
+  const isUnmountedRef = useRef(false);
+  const rolesCache = useRef<Record<string, UserRole[]>>({});
+  const lastUserIdRef = useRef<string | null>(null);
 
-  // Fetch user roles from database
-  const fetchUserRoles = async (userId: string): Promise<UserRole[]> => {
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isUnmountedRef.current = true;
+    };
+  }, []);
+
+  // Fetch user roles from database with caching
+  const fetchUserRoles = useCallback(async (userId: string): Promise<UserRole[]> => {
+    if (isUnmountedRef.current) return [];
+    
+    // Check cache first
+    if (rolesCache.current[userId]) {
+      return rolesCache.current[userId];
+    }
+
     try {
       const { data, error } = await supabase
         .from('user_roles')
@@ -53,22 +72,43 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
         return [];
       }
 
-      return data?.map(r => r.role as UserRole) || [];
+      const userRoles = data?.map(r => r.role as UserRole) || [];
+      
+      // Cache the result
+      rolesCache.current[userId] = userRoles;
+      
+      return userRoles;
     } catch (error) {
       console.error('Error fetching user roles:', error);
       return [];
     }
-  };
+  }, []);
+
+  // Stable navigation function
+  const navigateToAppropriate = useCallback((userRoles: UserRole[], event: string) => {
+    if (event !== 'SIGNED_IN') return;
+    
+    const currentPath = window.location.pathname;
+    if (currentPath === '/auth' || currentPath === '/') {
+      if (userRoles.includes('admin')) {
+        navigate('/admin-dashboard');
+      } else if (userRoles.includes('teacher')) {
+        navigate('/teacher-dashboard');
+      }
+    }
+  }, [navigate]);
 
   useEffect(() => {
     let cancelled = false;
 
     // Get initial session first
     const initializeAuth = async () => {
+      if (cancelled || isUnmountedRef.current) return;
+      
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
-        if (cancelled) return;
+        if (cancelled || isUnmountedRef.current) return;
         
         if (error) {
           console.error('[AuthContext] Error getting session:', error);
@@ -80,18 +120,22 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
 
-        if (session?.user) {
+        if (session?.user && session.user.id !== lastUserIdRef.current) {
+          lastUserIdRef.current = session.user.id;
           const userRoles = await fetchUserRoles(session.user.id);
-          if (!cancelled) {
+          if (!cancelled && !isUnmountedRef.current) {
             setRoles(userRoles);
           }
-        } else {
+        } else if (!session?.user) {
+          lastUserIdRef.current = null;
           setRoles([]);
         }
         
-        setLoading(false);
+        if (!cancelled && !isUnmountedRef.current) {
+          setLoading(false);
+        }
       } catch (e) {
-        if (!cancelled) {
+        if (!cancelled && !isUnmountedRef.current) {
           console.error("[AuthContext] Error initializing auth:", e);
           setLoading(false);
         }
@@ -101,7 +145,7 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
     // Auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (cancelled) return;
+        if (cancelled || isUnmountedRef.current) return;
 
         console.log('Auth state change:', event, session?.user?.id);
         
@@ -109,27 +153,23 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          const userRoles = await fetchUserRoles(session.user.id);
-          if (!cancelled) {
-            setRoles(userRoles);
-            
-            // Only navigate on SIGNED_IN event and if not already on a dashboard
-            if (event === 'SIGNED_IN') {
-              const currentPath = window.location.pathname;
-              if (currentPath === '/auth' || currentPath === '/') {
-                if (userRoles.includes('admin')) {
-                  navigate('/admin-dashboard');
-                } else if (userRoles.includes('teacher')) {
-                  navigate('/teacher-dashboard');
-                }
-              }
+          // Only fetch roles if user changed
+          if (session.user.id !== lastUserIdRef.current) {
+            lastUserIdRef.current = session.user.id;
+            const userRoles = await fetchUserRoles(session.user.id);
+            if (!cancelled && !isUnmountedRef.current) {
+              setRoles(userRoles);
+              navigateToAppropriate(userRoles, event);
             }
           }
         } else {
-          setRoles([]);
-          // Only redirect to auth if user explicitly signed out
-          if (event === 'SIGNED_OUT') {
-            navigate('/auth');
+          lastUserIdRef.current = null;
+          if (!cancelled && !isUnmountedRef.current) {
+            setRoles([]);
+            // Only redirect to auth if user explicitly signed out
+            if (event === 'SIGNED_OUT') {
+              navigate('/auth');
+            }
           }
         }
       }
@@ -142,13 +182,23 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
       cancelled = true;
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [fetchUserRoles, navigateToAppropriate]);
 
-  const hasRole = (role: UserRole) => roles.includes(role);
-  const isAdmin = roles.includes('admin');
+  const hasRole = useCallback((role: UserRole) => roles.includes(role), [roles]);
+  const isAdmin = useCallback(() => roles.includes('admin'), [roles]);
+
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = React.useMemo(() => ({
+    user,
+    session,
+    loading,
+    roles,
+    hasRole,
+    isAdmin: isAdmin()
+  }), [user, session, loading, roles, hasRole, isAdmin]);
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, roles, hasRole, isAdmin }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
