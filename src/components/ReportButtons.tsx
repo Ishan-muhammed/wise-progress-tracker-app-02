@@ -38,7 +38,11 @@ const ReportButtons = () => {
             <Button
               onClick={() => setActiveReport("daily")}
               variant={activeReport === "daily" ? "default" : "outline"}
-              className="h-20 flex flex-col"
+              className={`h-20 flex flex-col ${
+                activeReport === "daily" 
+                  ? "bg-[#019455] hover:bg-[#017a45] text-white" 
+                  : ""
+              }`}
             >
               <span className="text-lg font-semibold">Daily</span>
               <span className="text-sm text-muted-foreground">Today's Lessons</span>
@@ -47,7 +51,11 @@ const ReportButtons = () => {
             <Button
               onClick={() => setActiveReport("weekly")}
               variant={activeReport === "weekly" ? "default" : "outline"}
-              className="h-20 flex flex-col"
+              className={`h-20 flex flex-col ${
+                activeReport === "weekly" 
+                  ? "bg-[#019455] hover:bg-[#017a45] text-white" 
+                  : ""
+              }`}
             >
               <span className="text-lg font-semibold">Weekly</span>
               <span className="text-sm text-muted-foreground">This Week</span>
@@ -56,7 +64,11 @@ const ReportButtons = () => {
             <Button
               onClick={() => setActiveReport("monthly")}
               variant={activeReport === "monthly" ? "default" : "outline"}
-              className="h-20 flex flex-col"
+              className={`h-20 flex flex-col ${
+                activeReport === "monthly" 
+                  ? "bg-[#019455] hover:bg-[#017a45] text-white" 
+                  : ""
+              }`}
             >
               <span className="text-lg font-semibold">Monthly</span>
               <span className="text-sm text-muted-foreground">This Month</span>
@@ -65,7 +77,11 @@ const ReportButtons = () => {
             <Button
               onClick={() => setActiveReport("yearly")}
               variant={activeReport === "yearly" ? "default" : "outline"}
-              className="h-20 flex flex-col"
+              className={`h-20 flex flex-col ${
+                activeReport === "yearly" 
+                  ? "bg-[#019455] hover:bg-[#017a45] text-white" 
+                  : ""
+              }`}
             >
               <span className="text-lg font-semibold">Yearly</span>
               <span className="text-sm text-muted-foreground">Annual Summary</span>
