@@ -3,7 +3,6 @@ import React, { createContext, useContext, useEffect, useCallback } from 'react'
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthState } from '@/hooks/useAuthState';
-import { useAuthNavigation } from '@/hooks/useAuthNavigation';
 import { useAuthRoles } from '@/hooks/useAuthRoles';
 
 export type UserRole = 'teacher' | 'admin';
@@ -45,7 +44,6 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
     isUnmountedRef
   } = useAuthState();
 
-  const { navigateToAppropriate } = useAuthNavigation(setError);
   const { fetchUserRoles } = useAuthRoles(isUnmountedRef);
 
   const handleAuthStateChange = useCallback(async (event: string, session: Session | null) => {
@@ -60,7 +58,6 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
     if (session?.user) {
       console.log('Fetching user roles for:', session.user.id);
       
-      // Direct role check with immediate retry on failure
       try {
         const userRoles = await fetchUserRoles(session.user.id);
         console.log('Successfully fetched roles:', userRoles);
@@ -68,19 +65,15 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
         if (!isUnmountedRef.current) {
           setRoles(userRoles);
           
-          // Navigate immediately after setting roles
-          if (userRoles.length > 0) {
-            console.log('Triggering navigation with roles:', userRoles);
-            navigateToAppropriate(userRoles);
-          } else {
-            console.log('No roles found, showing error');
+          if (userRoles.length === 0) {
+            console.log('No roles found for user');
             setError('No user roles found. Please contact an administrator.');
           }
         }
       } catch (error) {
         console.error('Role fetch error:', error);
         if (!isUnmountedRef.current) {
-          setError('Failed to load user permissions. Please try signing in again.');
+          setError('Failed to load user permissions. Please contact an administrator.');
         }
       }
     } else {
@@ -92,14 +85,13 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
     if (!isUnmountedRef.current) {
       setLoading(false);
     }
-  }, [fetchUserRoles, navigateToAppropriate, setSession, setUser, setError, setRoles, setLoading, isUnmountedRef]);
+  }, [fetchUserRoles, setSession, setUser, setError, setRoles, setLoading, isUnmountedRef]);
 
   const retry = useCallback(() => {
     console.log('Retrying authentication');
     setError(null);
     setLoading(true);
     
-    // Clear session and force re-authentication
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
         console.error('Retry session error:', error);
@@ -114,10 +106,8 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     console.log('Setting up auth state listener');
     
-    // Set up the auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
         console.error('Initial session error:', error);
@@ -130,21 +120,20 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
       }
     });
 
-    // Reduced timeout to 8 seconds with better error handling
     const timeoutId = setTimeout(() => {
       if (!isUnmountedRef.current && loading) {
-        console.log('Authentication timeout after 8 seconds');
+        console.log('Authentication timeout after 5 seconds');
         setError('Authentication timeout. Please sign in.');
         setLoading(false);
       }
-    }, 8000);
+    }, 5000);
 
     return () => {
       console.log('Cleaning up auth subscription');
       subscription.unsubscribe();
       clearTimeout(timeoutId);
     };
-  }, []); // Empty dependency array - only run once
+  }, []);
 
   const contextValue = React.useMemo(() => ({
     user,
