@@ -69,7 +69,7 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
   const handleAuthStateChange = useCallback(async (event: string, session: Session | null) => {
     if (isUnmountedRef.current) return;
 
-    console.log('Auth state change:', event, session?.user?.id || 'No session', 'Explicit login:', isExplicitLogin);
+    console.log('Auth state change:', event, session?.user?.id || 'No session');
     
     setSession(session);
     setUser(session?.user ?? null);
@@ -77,6 +77,12 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
     
     if (session?.user) {
       console.log('User authenticated, fetching roles...');
+      
+      // Set explicit login flag for SIGNED_IN events (not for initial session restoration)
+      if (event === 'SIGNED_IN') {
+        console.log('Setting explicit login to true for SIGNED_IN event');
+        setIsExplicitLogin(true);
+      }
       
       try {
         const userRoles = await fetchUserRoles(session.user.id);
@@ -100,7 +106,7 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
         setIsExplicitLogin(false);
       }
     }
-  }, [fetchUserRoles, setSession, setUser, setError, setRoles, setLoading, isUnmountedRef, isExplicitLogin, setIsExplicitLogin]);
+  }, [fetchUserRoles, setSession, setUser, setError, setRoles, setLoading, isUnmountedRef, setIsExplicitLogin]);
 
   const retry = useCallback(() => {
     console.log('Retrying authentication');

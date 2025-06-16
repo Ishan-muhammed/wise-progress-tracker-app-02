@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const navigate = useNavigate();
-  const { user, loading, error, roles, isExplicitLogin, logout } = useAuth();
+  const { user, loading, roles, isExplicitLogin } = useAuth();
 
   useEffect(() => {
     console.log('Auth page - User:', !!user, 'Loading:', loading, 'Roles:', roles, 'Explicit login:', isExplicitLogin);
@@ -24,15 +24,7 @@ const Auth = () => {
         navigate('/teacher-dashboard', { replace: true });
       }
     }
-  }, [user, loading, roles, navigate, error, isExplicitLogin]);
-
-  // Clear any existing session when component mounts (force fresh login)
-  useEffect(() => {
-    if (!loading && user && !isExplicitLogin) {
-      console.log('Auth page: Clearing existing session to force fresh login');
-      logout();
-    }
-  }, [loading, user, isExplicitLogin, logout]);
+  }, [user, loading, roles, navigate, isExplicitLogin]);
 
   // Show loading state
   if (loading) {

@@ -1,10 +1,42 @@
 
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Onboarding = () => {
   const navigate = useNavigate();
+  const { user, loading, roles } = useAuth();
+
+  useEffect(() => {
+    // If user is authenticated and has roles, redirect to appropriate dashboard
+    if (!loading && user && roles.length > 0) {
+      console.log('Onboarding: Authenticated user detected, redirecting to dashboard');
+      if (roles.includes('admin')) {
+        navigate('/admin-dashboard', { replace: true });
+      } else if (roles.includes('teacher')) {
+        navigate('/teacher-dashboard', { replace: true });
+      }
+    }
+  }, [user, loading, roles, navigate]);
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg mb-2">Loading...</div>
+          <div className="text-sm text-gray-500">Checking authentication...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't show onboarding if user is authenticated
+  if (user && roles.length > 0) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">

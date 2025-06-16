@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubjects } from "@/hooks/useSubjects";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
+import LogoutButton from "@/components/LogoutButton";
 
 interface Profile {
   name: string;
@@ -238,6 +239,22 @@ const ProfileSection = () => {
                 </div>
               </div>
             )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Account Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col space-y-3">
+            <p className="text-sm text-gray-600 mb-3">
+              Sign out of your account to switch users or for security purposes.
+            </p>
+            <div className="flex justify-start">
+              <LogoutButton />
+            </div>
           </div>
         </CardContent>
       </Card>

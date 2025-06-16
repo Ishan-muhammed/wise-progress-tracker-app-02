@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
@@ -6,7 +7,7 @@ import { AuthForm } from "@/components/auth/AuthForm";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { user, loading, error, roles, isExplicitLogin, logout } = useAuth();
+  const { user, loading, error, roles, isExplicitLogin } = useAuth();
 
   useEffect(() => {
     console.log('Login page - User:', !!user, 'Loading:', loading, 'Roles:', roles, 'Explicit login:', isExplicitLogin);
@@ -23,14 +24,6 @@ const Login = () => {
       }
     }
   }, [user, loading, roles, navigate, error, isExplicitLogin]);
-
-  // Clear any existing session when component mounts (force fresh login)
-  useEffect(() => {
-    if (!loading && user && !isExplicitLogin) {
-      console.log('Login page: Clearing existing session to force fresh login');
-      logout();
-    }
-  }, [loading, user, isExplicitLogin, logout]);
 
   // Show loading state
   if (loading) {
