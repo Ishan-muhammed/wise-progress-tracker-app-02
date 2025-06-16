@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
@@ -8,18 +8,27 @@ import { useAuth } from "@/contexts/AuthContext";
 const Login = () => {
   const navigate = useNavigate();
   const { user, loading, error, retry, roles } = useAuth();
+  const [debugInfo, setDebugInfo] = useState(false);
 
   useEffect(() => {
+    console.log('Login page - User:', !!user, 'Loading:', loading, 'Roles:', roles, 'Error:', error);
+    
     // If user exists and has roles, navigate appropriately
     if (!loading && user && roles.length > 0) {
       console.log('Login: User detected with roles, navigating...');
-      if (roles.includes('admin')) {
-        navigate('/admin-dashboard');
-      } else if (roles.includes('teacher')) {
-        navigate('/teacher-dashboard');
-      }
+      const timeoutId = setTimeout(() => {
+        if (roles.includes('admin')) {
+          console.log('Forcing navigation to admin dashboard');
+          navigate('/admin-dashboard', { replace: true });
+        } else if (roles.includes('teacher')) {
+          console.log('Forcing navigation to teacher dashboard');
+          navigate('/teacher-dashboard', { replace: true });
+        }
+      }, 500);
+
+      return () => clearTimeout(timeoutId);
     }
-  }, [user, loading, roles, navigate]);
+  }, [user, loading, roles, navigate, error]);
 
   // Show error state with retry option
   if (error) {
@@ -69,6 +78,24 @@ const Login = () => {
                 Go to Login Page
               </Button>
             </div>
+            {/* Debug Information */}
+            <div className="text-center">
+              <Button 
+                variant="ghost" 
+                onClick={() => setDebugInfo(!debugInfo)} 
+                className="text-xs text-gray-500"
+              >
+                Show Debug Info
+              </Button>
+            </div>
+            {debugInfo && (
+              <div className="text-xs text-gray-600 bg-gray-100 p-2 rounded">
+                <p>User: {user ? 'Yes' : 'No'}</p>
+                <p>Loading: {loading ? 'Yes' : 'No'}</p>
+                <p>Roles: {roles.join(', ') || 'None'}</p>
+                <p>Error: {error}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -81,16 +108,55 @@ const Login = () => {
         <div className="text-center">
           <div className="text-lg mb-2">Loading...</div>
           <div className="text-sm text-gray-500">Initializing application</div>
+          <div className="mt-4">
+            <Button 
+              variant="ghost" 
+              onClick={() => setDebugInfo(!debugInfo)}
+              className="text-xs"
+            >
+              Debug Info
+            </Button>
+            {debugInfo && (
+              <div className="text-xs text-gray-600 mt-2">
+                <p>User: {user ? 'Found' : 'None'}</p>
+                <p>Roles: {roles.length} roles</p>
+                <p>Path: {window.location.pathname}</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
   }
 
-  // If user exists but still on login page, show redirecting message
+  // If user exists but still on login page, show redirecting message with manual options
   if (user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Redirecting to dashboard...</div>
+        <div className="text-center">
+          <div className="text-lg mb-4">Redirecting to dashboard...</div>
+          <div className="space-y-2">
+            {roles.includes('admin') && (
+              <Button 
+                onClick={() => navigate('/admin-dashboard')}
+                className="mr-2"
+              >
+                Go to Admin Dashboard
+              </Button>
+            )}
+            {roles.includes('teacher') && (
+              <Button 
+                onClick={() => navigate('/teacher-dashboard')}
+                variant="outline"
+              >
+                Go to Teacher Dashboard
+              </Button>
+            )}
+          </div>
+          <div className="mt-4 text-sm text-gray-600">
+            <p>Roles: {roles.join(', ')}</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -112,7 +178,6 @@ const Login = () => {
           />
         </svg>
         
-        {/* Wave 2 - Middle layer */}
         <svg
           className="absolute bottom-0 left-0 w-full h-full opacity-40"
           viewBox="0 0 1200 800"
@@ -125,7 +190,6 @@ const Login = () => {
           />
         </svg>
         
-        {/* Wave 3 - Top layer */}
         <svg
           className="absolute bottom-0 left-0 w-full h-full opacity-20"
           viewBox="0 0 1200 800"

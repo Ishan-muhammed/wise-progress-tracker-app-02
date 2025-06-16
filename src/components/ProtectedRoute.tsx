@@ -27,7 +27,7 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
     // If no user after loading is complete, redirect to auth
     if (!user) {
       console.log('ProtectedRoute: No user, redirecting to auth');
-      navigate("/auth");
+      navigate("/auth", { replace: true });
       return;
     }
 
@@ -43,11 +43,11 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
       console.log('ProtectedRoute: Insufficient roles, redirecting based on user roles');
       // Redirect to appropriate dashboard based on user's roles
       if (roles.includes('admin')) {
-        navigate("/admin-dashboard");
+        navigate("/admin-dashboard", { replace: true });
       } else if (roles.includes('teacher')) {
-        navigate("/teacher-dashboard");
+        navigate("/teacher-dashboard", { replace: true });
       } else {
-        navigate("/auth");
+        navigate("/auth", { replace: true });
       }
     }
   }, [user, loading, navigate, requiredRoles, roles, error]);
@@ -59,7 +59,7 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
         <div className="text-center max-w-md">
           <div className="text-lg mb-4 text-red-600">Connection Error</div>
           <div className="text-sm text-gray-600 mb-6">{error}</div>
-          <div className="space-x-4">
+          <div className="space-y-2">
             <Button onClick={retry} className="bg-blue-500 hover:bg-blue-600">
               Try Again
             </Button>
@@ -87,7 +87,7 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-lg mb-2">Loading...</div>
-          <div className="text-sm text-gray-500">Connecting to authentication service</div>
+          <div className="text-sm text-gray-500">Verifying permissions</div>
         </div>
       </div>
     );

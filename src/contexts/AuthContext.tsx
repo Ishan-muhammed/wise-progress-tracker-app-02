@@ -48,100 +48,101 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
   const { navigateToAppropriate } = useAuthNavigation(setError);
   const { fetchUserRoles } = useAuthRoles(isUnmountedRef);
 
-  const initializeAuth = useCallback(async () => {
+  const handleAuthStateChange = useCallback(async (event: string, session: Session | null) => {
     if (isUnmountedRef.current) return;
+
+    console.log('Auth state change:', event, session?.user?.id || 'No session');
     
-    console.log('Initializing authentication...');
+    setSession(session);
+    setUser(session?.user ?? null);
     setError(null);
-
-    try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (isUnmountedRef.current) return;
-      
-      if (sessionError) {
-        console.error('Session error:', sessionError);
-        setError('Authentication failed. Please try again.');
-        setLoading(false);
-        return;
-      }
-
-      console.log('Session check complete:', session?.user?.id || 'No session');
-      setSession(session);
-      setUser(session?.user ?? null);
-
-      if (session?.user) {
-        console.log('Fetching user roles...');
+    
+    if (session?.user) {
+      console.log('Fetching user roles for:', session.user.id);
+      try {
         const userRoles = await fetchUserRoles(session.user.id);
         if (!isUnmountedRef.current) {
+          console.log('Setting roles:', userRoles);
           setRoles(userRoles);
-          console.log('User roles loaded:', userRoles);
-          navigateToAppropriate(userRoles);
+          
+          // Navigate after roles are set
+          if (userRoles.length > 0) {
+            console.log('Triggering navigation with roles:', userRoles);
+            navigateToAppropriate(userRoles);
+          } else {
+            setError('No user roles found. Please contact an administrator.');
+          }
         }
-      } else {
+      } catch (error) {
+        console.error('Error fetching roles:', error);
+        if (!isUnmountedRef.current) {
+          setError('Failed to load user permissions. Please try again.');
+        }
+      }
+    } else {
+      if (!isUnmountedRef.current) {
         setRoles([]);
       }
-      
-      if (!isUnmountedRef.current) {
-        setLoading(false);
-        console.log('Authentication initialization complete');
-      }
-    } catch (e) {
-      if (!isUnmountedRef.current) {
-        console.error('Authentication error:', e);
-        setError('Failed to initialize authentication. Please try again.');
-        setLoading(false);
-      }
     }
-  }, [fetchUserRoles, navigateToAppropriate, setError, setLoading, setSession, setUser, setRoles, isUnmountedRef]);
+    
+    if (!isUnmountedRef.current) {
+      setLoading(false);
+    }
+  }, [fetchUserRoles, navigateToAppropriate, setSession, setUser, setError, setRoles, setLoading, isUnmountedRef]);
 
   const retry = useCallback(() => {
-    console.log('Retrying authentication initialization');
+    console.log('Retrying authentication');
+    setError(null);
     setLoading(true);
-    initializeAuth();
-  }, [initializeAuth, setLoading]);
+    
+    // Re-check session
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Retry session error:', error);
+        setError('Failed to reconnect. Please refresh the page.');
+        setLoading(false);
+      } else {
+        handleAuthStateChange('RETRY', session);
+      }
+    });
+  }, [handleAuthStateChange, setError, setLoading]);
 
   useEffect(() => {
     console.log('Setting up auth state listener');
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (isUnmountedRef.current) return;
+    // Set up the auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
-        console.log('Auth state change:', event, session?.user?.id || 'No session');
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        setError(null);
-        
-        if (session?.user) {
-          const userRoles = await fetchUserRoles(session.user.id);
-          if (!isUnmountedRef.current) {
-            setRoles(userRoles);
-            if (event === 'SIGNED_IN') {
-              navigateToAppropriate(userRoles);
-            }
-          }
-        } else {
-          if (!isUnmountedRef.current) {
-            setRoles([]);
-          }
-        }
-        
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Initial session error:', error);
         if (!isUnmountedRef.current) {
+          setError('Authentication service unavailable. Please try again.');
           setLoading(false);
         }
+      } else {
+        handleAuthStateChange('INITIAL_SESSION', session);
       }
-    );
+    });
 
-    // Only initialize once
-    initializeAuth();
+    // Timeout fallback to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      if (!isUnmountedRef.current && loading) {
+        console.log('Authentication timeout - forcing completion');
+        setLoading(false);
+        if (!user && !error) {
+          setError('Authentication timeout. Please refresh the page.');
+        }
+      }
+    }, 10000); // 10 second timeout
 
     return () => {
       console.log('Cleaning up auth subscription');
       subscription.unsubscribe();
+      clearTimeout(timeoutId);
     };
-  }, [initializeAuth, fetchUserRoles, navigateToAppropriate, setSession, setUser, setError, setRoles, setLoading, isUnmountedRef]);
+  }, []); // Empty dependency array - only run once
 
   const contextValue = React.useMemo(() => ({
     user,
