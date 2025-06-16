@@ -1,9 +1,7 @@
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Mail, BookOpen, Users, MoreHorizontal, Edit } from "lucide-react";
+import { Mail, BookOpen, Users } from "lucide-react";
 
 interface TeacherCardProps {
   teacher: {
@@ -29,25 +27,6 @@ const TeacherCard = ({ teacher }: TeacherCardProps) => {
               {teacher.email}
             </div>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                View Details
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                Reset Password
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </CardHeader>
       
