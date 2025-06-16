@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import Auth from "./pages/Auth";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import TeacherProfile from "./pages/TeacherProfile";
 import WeeklyClassSubjectDetail from "./pages/WeeklyClassSubjectDetail";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
@@ -40,6 +41,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRoles={['admin']}>
                   <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/teacher-profile/:teacherId" 
+              element={
+                <ProtectedRoute requiredRoles={['admin']}>
+                  <TeacherProfile />
                 </ProtectedRoute>
               } 
             />

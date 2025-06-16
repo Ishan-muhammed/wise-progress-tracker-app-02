@@ -1,7 +1,7 @@
-
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Mail, BookOpen, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface TeacherCardProps {
   teacher: {
@@ -16,8 +16,17 @@ interface TeacherCardProps {
 }
 
 const TeacherCard = ({ teacher }: TeacherCardProps) => {
+  const navigate = useNavigate();
+
+  const handleCardClick = () => {
+    navigate(`/teacher-profile/${teacher.id}`);
+  };
+
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-200">
+    <Card 
+      className="hover:shadow-lg transition-shadow duration-200 cursor-pointer hover:bg-gray-50" 
+      onClick={handleCardClick}
+    >
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
           <div className="flex-1">
