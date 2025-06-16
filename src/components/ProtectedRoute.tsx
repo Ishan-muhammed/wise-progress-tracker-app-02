@@ -2,6 +2,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export type UserRole = 'teacher' | 'admin';
 
@@ -11,7 +12,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
-  const { user, loading, roles } = useAuth();
+  const { user, loading, roles, error, retry } = useAuth();
   const navigate = useNavigate();
   const [timeoutReached, setTimeoutReached] = useState(false);
 
@@ -19,16 +20,19 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
   useEffect(() => {
     const timeout = setTimeout(() => {
       setTimeoutReached(true);
-    }, 10000); // 10 second timeout
+    }, 15000); // 15 second timeout for ProtectedRoute
 
     return () => clearTimeout(timeout);
   }, []);
 
   useEffect(() => {
-    // Don't do anything while loading (unless timeout reached)
-    if (loading && !timeoutReached) return;
+    // Don't do anything while loading (unless timeout reached or there's an error)
+    if (loading && !timeoutReached && !error) return;
 
-    console.log('ProtectedRoute: Checking access - user:', !!user, 'loading:', loading, 'roles:', roles);
+    console.log('ProtectedRoute: Checking access - user:', !!user, 'loading:', loading, 'roles:', roles, 'error:', error);
+
+    // If there's an error, don't redirect
+    if (error) return;
 
     // If no user after loading is complete (or timeout), redirect to auth
     if (!user) {
@@ -56,12 +60,38 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
         navigate("/auth");
       }
     }
-  }, [user, loading, navigate, requiredRoles, roles, timeoutReached]);
+  }, [user, loading, navigate, requiredRoles, roles, timeoutReached, error]);
+
+  // Show error state with retry option
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className="text-lg mb-4 text-red-600">Authentication Error</div>
+          <div className="text-sm text-gray-600 mb-6">{error}</div>
+          <div className="space-x-4">
+            <Button onClick={retry} className="bg-blue-500 hover:bg-blue-600">
+              Retry
+            </Button>
+            <Button 
+              onClick={() => window.location.reload()} 
+              variant="outline"
+            >
+              Refresh Page
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading && !timeoutReached) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <div className="text-center">
+          <div className="text-lg mb-2">Loading...</div>
+          <div className="text-sm text-gray-500">Connecting to authentication service</div>
+        </div>
       </div>
     );
   }
@@ -71,12 +101,18 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-lg mb-4">Loading took too long</div>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Refresh Page
-          </button>
+          <div className="text-sm text-gray-600 mb-6">The authentication service may be experiencing issues.</div>
+          <div className="space-x-4">
+            <Button onClick={retry} className="bg-blue-500 hover:bg-blue-600">
+              Try Again
+            </Button>
+            <Button 
+              onClick={() => window.location.reload()} 
+              variant="outline"
+            >
+              Refresh Page
+            </Button>
+          </div>
         </div>
       </div>
     );
