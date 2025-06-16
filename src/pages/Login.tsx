@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
@@ -7,23 +6,31 @@ import { AuthForm } from "@/components/auth/AuthForm";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { user, loading, error, roles } = useAuth();
+  const { user, loading, error, roles, isExplicitLogin, logout } = useAuth();
 
   useEffect(() => {
-    console.log('Login page - User:', !!user, 'Loading:', loading, 'Roles:', roles, 'Error:', error);
+    console.log('Login page - User:', !!user, 'Loading:', loading, 'Roles:', roles, 'Explicit login:', isExplicitLogin);
     
-    // Only navigate if user exists, has roles, and not loading
-    if (!loading && user && roles.length > 0) {
-      console.log('Login: User detected with roles, navigating...');
+    // Only navigate if user exists, has roles, not loading, AND this is an explicit login
+    if (!loading && user && roles.length > 0 && isExplicitLogin) {
+      console.log('Login: User detected with roles after explicit login, navigating...');
       if (roles.includes('admin')) {
         console.log('Navigating to admin dashboard');
         navigate('/admin-dashboard', { replace: true });
       } else if (roles.includes('teacher')) {
-        console.log('Navigating to teacher dashboard');
+        console.log('Navigating to teacher dashboard');  
         navigate('/teacher-dashboard', { replace: true });
       }
     }
-  }, [user, loading, roles, navigate, error]);
+  }, [user, loading, roles, navigate, error, isExplicitLogin]);
+
+  // Clear any existing session when component mounts (force fresh login)
+  useEffect(() => {
+    if (!loading && user && !isExplicitLogin) {
+      console.log('Login page: Clearing existing session to force fresh login');
+      logout();
+    }
+  }, [loading, user, isExplicitLogin, logout]);
 
   // Show loading state
   if (loading) {
@@ -31,13 +38,12 @@ const Login = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-lg mb-2">Loading...</div>
-          <div className="text-sm text-gray-500">Signing you in...</div>
+          <div className="text-sm text-gray-500">Checking authentication...</div>
         </div>
       </div>
     );
   }
 
-  // Show login form for errors or when no user or no roles
   return (
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
       {/* Wave Background */}

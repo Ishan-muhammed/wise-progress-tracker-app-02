@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import ReportButtons from "@/components/ReportButtons";
 import ProfileSection from "@/components/ProfileSection";
 import TeacherManagement from "@/components/TeacherManagement";
+import LogoutButton from "@/components/LogoutButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const AdminDashboard = () => {
@@ -32,8 +33,13 @@ const AdminDashboard = () => {
       <Header />
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="mb-6 text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600">Manage reports, teachers, and system settings</p>
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+              <p className="text-gray-600">Manage reports, teachers, and system settings</p>
+            </div>
+            <LogoutButton />
+          </div>
         </div>
         
         <Tabs defaultValue="reports" className="w-full">

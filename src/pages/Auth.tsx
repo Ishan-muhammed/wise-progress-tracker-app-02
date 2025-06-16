@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AuthForm } from "@/components/auth/AuthForm";
@@ -7,14 +8,14 @@ import { useAuth } from "@/contexts/AuthContext";
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const navigate = useNavigate();
-  const { user, loading, error, roles } = useAuth();
+  const { user, loading, error, roles, isExplicitLogin, logout } = useAuth();
 
   useEffect(() => {
-    console.log('Auth page - User:', !!user, 'Loading:', loading, 'Roles:', roles, 'Error:', error);
+    console.log('Auth page - User:', !!user, 'Loading:', loading, 'Roles:', roles, 'Explicit login:', isExplicitLogin);
     
-    // Only navigate if user exists, has roles, and not loading
-    if (!loading && user && roles.length > 0) {
-      console.log('Auth: User detected with roles, navigating...');
+    // Only navigate if user exists, has roles, not loading, AND this is an explicit login
+    if (!loading && user && roles.length > 0 && isExplicitLogin) {
+      console.log('Auth: User detected with roles after explicit login, navigating...');
       if (roles.includes('admin')) {
         console.log('Navigating to admin dashboard');
         navigate('/admin-dashboard', { replace: true });
@@ -23,7 +24,15 @@ const Auth = () => {
         navigate('/teacher-dashboard', { replace: true });
       }
     }
-  }, [user, loading, roles, navigate, error]);
+  }, [user, loading, roles, navigate, error, isExplicitLogin]);
+
+  // Clear any existing session when component mounts (force fresh login)
+  useEffect(() => {
+    if (!loading && user && !isExplicitLogin) {
+      console.log('Auth page: Clearing existing session to force fresh login');
+      logout();
+    }
+  }, [loading, user, isExplicitLogin, logout]);
 
   // Show loading state
   if (loading) {
@@ -31,7 +40,7 @@ const Auth = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-lg mb-2">Loading...</div>
-          <div className="text-sm text-gray-500">Signing you in...</div>
+          <div className="text-sm text-gray-500">Checking authentication...</div>
         </div>
       </div>
     );

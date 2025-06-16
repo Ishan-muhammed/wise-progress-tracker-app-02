@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { RoleSelector } from "./RoleSelector";
 import { SubjectSelector } from "./SubjectSelector";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AuthFormProps {
   isLogin: boolean;
@@ -24,6 +25,7 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
   const [age, setAge] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { setExplicitLogin } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,12 +58,15 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
       }
 
       console.log('AuthForm: Login successful for user:', data.user.id);
+      
+      // Set explicit login flag to allow navigation
+      setExplicitLogin(true);
+      
       toast({
         title: "Login Successful",
         description: "Welcome back!",
       });
       
-      // Don't navigate here - let AuthContext handle it
     } catch (error: any) {
       console.error('AuthForm: Login failed:', error);
       toast({

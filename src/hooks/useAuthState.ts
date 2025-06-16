@@ -9,6 +9,7 @@ export const useAuthState = () => {
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<UserRole[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isExplicitLogin, setIsExplicitLogin] = useState(false);
   
   const isUnmountedRef = useRef(false);
   const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -39,6 +40,8 @@ export const useAuthState = () => {
     hasRole,
     isAdmin,
     isUnmountedRef,
-    initTimeoutRef
+    initTimeoutRef,
+    isExplicitLogin,
+    setIsExplicitLogin
   };
 };

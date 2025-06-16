@@ -16,6 +16,9 @@ interface AuthContextType {
   isAdmin: boolean;
   error: string | null;
   retry: () => void;
+  logout: () => Promise<void>;
+  isExplicitLogin: boolean;
+  setExplicitLogin: (value: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -27,6 +30,9 @@ const AuthContext = createContext<AuthContextType>({
   isAdmin: false,
   error: null,
   retry: () => {},
+  logout: async () => {},
+  isExplicitLogin: false,
+  setExplicitLogin: () => {},
 });
 
 export const useAuth = () => {
@@ -41,15 +47,29 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
   const {
     user, setUser, session, setSession, loading, setLoading,
     roles, setRoles, error, setError, hasRole, isAdmin,
-    isUnmountedRef
+    isUnmountedRef, isExplicitLogin, setIsExplicitLogin
   } = useAuthState();
 
   const { fetchUserRoles } = useAuthRoles(isUnmountedRef);
 
+  const logout = useCallback(async () => {
+    console.log('Logging out user');
+    setIsExplicitLogin(false);
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Logout error:', error);
+    }
+  }, [setIsExplicitLogin]);
+
+  const setExplicitLogin = useCallback((value: boolean) => {
+    console.log('Setting explicit login:', value);
+    setIsExplicitLogin(value);
+  }, [setIsExplicitLogin]);
+
   const handleAuthStateChange = useCallback(async (event: string, session: Session | null) => {
     if (isUnmountedRef.current) return;
 
-    console.log('Auth state change:', event, session?.user?.id || 'No session');
+    console.log('Auth state change:', event, session?.user?.id || 'No session', 'Explicit login:', isExplicitLogin);
     
     setSession(session);
     setUser(session?.user ?? null);
@@ -69,7 +89,6 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
       } catch (error) {
         console.error('Role fetch error:', error);
         if (!isUnmountedRef.current) {
-          // Don't set error for role fetching issues, just use empty roles
           setRoles([]);
           setLoading(false);
         }
@@ -78,9 +97,10 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
       if (!isUnmountedRef.current) {
         setRoles([]);
         setLoading(false);
+        setIsExplicitLogin(false);
       }
     }
-  }, [fetchUserRoles, setSession, setUser, setError, setRoles, setLoading, isUnmountedRef]);
+  }, [fetchUserRoles, setSession, setUser, setError, setRoles, setLoading, isUnmountedRef, isExplicitLogin, setIsExplicitLogin]);
 
   const retry = useCallback(() => {
     console.log('Retrying authentication');
@@ -103,7 +123,7 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
-    // Get initial session without timeout
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
         console.error('Initial session error:', error);
@@ -112,6 +132,7 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
           setLoading(false);
         }
       } else {
+        // Don't set explicit login for initial session restoration
         handleAuthStateChange('INITIAL_SESSION', session);
       }
     });
@@ -130,8 +151,11 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
     hasRole,
     isAdmin: isAdmin(),
     error,
-    retry
-  }), [user, session, loading, roles, hasRole, isAdmin, error, retry]);
+    retry,
+    logout,
+    isExplicitLogin,
+    setExplicitLogin
+  }), [user, session, loading, roles, hasRole, isAdmin, error, retry, logout, isExplicitLogin, setExplicitLogin]);
 
   return (
     <AuthContext.Provider value={contextValue}>

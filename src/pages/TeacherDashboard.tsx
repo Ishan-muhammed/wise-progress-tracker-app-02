@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import LessonForm from "@/components/LessonForm";
 import ProfileSection from "@/components/ProfileSection";
+import LogoutButton from "@/components/LogoutButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const TeacherDashboard = () => {
@@ -33,7 +34,6 @@ const TeacherDashboard = () => {
           />
         </svg>
         
-        {/* Wave 2 - Middle layer */}
         <svg
           className="absolute bottom-0 left-0 w-full h-full opacity-40"
           viewBox="0 0 1200 800"
@@ -46,7 +46,6 @@ const TeacherDashboard = () => {
           />
         </svg>
         
-        {/* Wave 3 - Top layer */}
         <svg
           className="absolute bottom-0 left-0 w-full h-full opacity-20"
           viewBox="0 0 1200 800"
@@ -65,8 +64,13 @@ const TeacherDashboard = () => {
         <Header />
         <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           <div className="mb-6 text-center">
-            <h1 className="text-3xl font-bold text-gray-900">Teacher Dashboard</h1>
-            <p className="text-gray-600">Manage your lessons and profile</p>
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Teacher Dashboard</h1>
+                <p className="text-gray-600">Manage your lessons an profile</p>
+              </div>
+              <LogoutButton />
+            </div>
           </div>
           
           <Tabs defaultValue="lessons" className="w-full">
