@@ -24,8 +24,8 @@ const TeacherMonthlyChart = ({ data }: MonthlyChartProps) => {
         <AreaChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
           <defs>
             <linearGradient id="monthlyGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#059669" stopOpacity={0.6}/>
-              <stop offset="95%" stopColor="#059669" stopOpacity={0.1}/>
+              <stop offset="5%" stopColor="#039559" stopOpacity={0.8}/>
+              <stop offset="95%" stopColor="#039559" stopOpacity={0.1}/>
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -56,11 +56,11 @@ const TeacherMonthlyChart = ({ data }: MonthlyChartProps) => {
           <Area 
             type="monotone" 
             dataKey="completed" 
-            stroke="#059669" 
-            strokeWidth={2}
+            stroke="#039559" 
+            strokeWidth={3}
             fill="url(#monthlyGradient)"
-            dot={{ fill: '#059669', strokeWidth: 2, r: 4 }}
-            activeDot={{ r: 6, fill: '#059669' }}
+            dot={{ fill: '#039559', strokeWidth: 2, r: 4 }}
+            activeDot={{ r: 6, fill: '#039559' }}
           />
         </AreaChart>
       </ResponsiveContainer>
