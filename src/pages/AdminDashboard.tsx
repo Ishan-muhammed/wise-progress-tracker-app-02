@@ -38,9 +38,24 @@ const AdminDashboard = () => {
         
         <Tabs defaultValue="reports" className="w-full">
           <TabsList className="grid w-full grid-cols-3 max-w-lg mx-auto mb-6">
-            <TabsTrigger value="reports">Reports</TabsTrigger>
-            <TabsTrigger value="teachers">Teachers</TabsTrigger>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger 
+              value="reports"
+              className="data-[state=active]:bg-[#039559] data-[state=active]:text-white"
+            >
+              Reports
+            </TabsTrigger>
+            <TabsTrigger 
+              value="teachers"
+              className="data-[state=active]:bg-[#039559] data-[state=active]:text-white"
+            >
+              Teachers
+            </TabsTrigger>
+            <TabsTrigger 
+              value="profile"
+              className="data-[state=active]:bg-[#039559] data-[state=active]:text-white"
+            >
+              Profile
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="reports">
