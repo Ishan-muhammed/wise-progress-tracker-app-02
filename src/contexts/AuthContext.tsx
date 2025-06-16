@@ -59,22 +59,48 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
     
     if (session?.user) {
       console.log('Fetching user roles for:', session.user.id);
+      
+      // Retry logic for role fetching
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      const fetchRolesWithRetry = async (): Promise<UserRole[]> => {
+        try {
+          const userRoles = await fetchUserRoles(session.user.id);
+          console.log('Successfully fetched roles:', userRoles);
+          return userRoles;
+        } catch (error) {
+          console.error(`Role fetch attempt ${retryCount + 1} failed:`, error);
+          retryCount++;
+          
+          if (retryCount < maxRetries) {
+            console.log(`Retrying role fetch in 1 second...`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            return fetchRolesWithRetry();
+          }
+          throw error;
+        }
+      };
+
       try {
-        const userRoles = await fetchUserRoles(session.user.id);
+        const userRoles = await fetchRolesWithRetry();
         if (!isUnmountedRef.current) {
           console.log('Setting roles:', userRoles);
           setRoles(userRoles);
           
-          // Navigate after roles are set
+          // Navigate after roles are confirmed
           if (userRoles.length > 0) {
             console.log('Triggering navigation with roles:', userRoles);
-            navigateToAppropriate(userRoles);
+            // Small delay to ensure state is updated
+            setTimeout(() => {
+              navigateToAppropriate(userRoles);
+            }, 100);
           } else {
             setError('No user roles found. Please contact an administrator.');
           }
         }
       } catch (error) {
-        console.error('Error fetching roles:', error);
+        console.error('Final error fetching roles:', error);
         if (!isUnmountedRef.current) {
           setError('Failed to load user permissions. Please try again.');
         }
@@ -126,16 +152,21 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
       }
     });
 
-    // Timeout fallback to prevent infinite loading
+    // Increase timeout to 15 seconds and add better state checking
     const timeoutId = setTimeout(() => {
       if (!isUnmountedRef.current && loading) {
-        console.log('Authentication timeout - forcing completion');
-        setLoading(false);
-        if (!user && !error) {
+        console.log('Authentication timeout after 15 seconds - checking current state');
+        console.log('Current state - User:', !!user, 'Roles:', roles.length);
+        
+        // If we have a user but no roles, that's the issue
+        if (user && roles.length === 0) {
+          setError('Failed to load user roles. Please try refreshing the page.');
+        } else if (!user) {
           setError('Authentication timeout. Please refresh the page.');
         }
+        setLoading(false);
       }
-    }, 10000); // 10 second timeout
+    }, 15000); // Increased to 15 seconds
 
     return () => {
       console.log('Cleaning up auth subscription');

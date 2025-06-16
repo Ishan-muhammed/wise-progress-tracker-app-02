@@ -9,6 +9,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { user, loading, error, retry, roles } = useAuth();
   const [debugInfo, setDebugInfo] = useState(false);
+  const [showManualNav, setShowManualNav] = useState(false);
 
   useEffect(() => {
     console.log('Login page - User:', !!user, 'Loading:', loading, 'Roles:', roles, 'Error:', error);
@@ -27,6 +28,15 @@ const Login = () => {
       }, 500);
 
       return () => clearTimeout(timeoutId);
+    }
+
+    // Show manual navigation after 5 seconds if still loading or has error
+    if (user && (loading || error)) {
+      const manualNavTimeout = setTimeout(() => {
+        setShowManualNav(true);
+      }, 5000);
+
+      return () => clearTimeout(manualNavTimeout);
     }
   }, [user, loading, roles, navigate, error]);
 
@@ -69,6 +79,30 @@ const Login = () => {
             >
               Refresh Page
             </Button>
+            
+            {/* Show manual navigation if user is authenticated but roles failed */}
+            {user && (
+              <div className="space-y-2 pt-4 border-t">
+                <p className="text-sm text-center text-gray-600">Manual Navigation:</p>
+                <div className="flex space-x-2">
+                  <Button 
+                    onClick={() => navigate('/admin-dashboard')}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    Admin Dashboard
+                  </Button>
+                  <Button 
+                    onClick={() => navigate('/teacher-dashboard')}
+                    variant="outline" 
+                    className="flex-1"
+                  >
+                    Teacher Dashboard
+                  </Button>
+                </div>
+              </div>
+            )}
+            
             <div className="text-center">
               <Button 
                 variant="ghost" 
@@ -94,6 +128,7 @@ const Login = () => {
                 <p>Loading: {loading ? 'Yes' : 'No'}</p>
                 <p>Roles: {roles.join(', ') || 'None'}</p>
                 <p>Error: {error}</p>
+                <p>Path: {window.location.pathname}</p>
               </div>
             )}
           </CardContent>
@@ -108,6 +143,28 @@ const Login = () => {
         <div className="text-center">
           <div className="text-lg mb-2">Loading...</div>
           <div className="text-sm text-gray-500">Initializing application</div>
+          
+          {/* Show manual navigation after 5 seconds */}
+          {showManualNav && user && (
+            <div className="mt-6 space-y-4">
+              <p className="text-sm text-gray-600">Taking longer than expected?</p>
+              <div className="space-y-2">
+                <Button 
+                  onClick={() => navigate('/admin-dashboard')}
+                  className="mr-2"
+                >
+                  Go to Admin Dashboard
+                </Button>
+                <Button 
+                  onClick={() => navigate('/teacher-dashboard')}
+                  variant="outline"
+                >
+                  Go to Teacher Dashboard
+                </Button>
+              </div>
+            </div>
+          )}
+          
           <div className="mt-4">
             <Button 
               variant="ghost" 

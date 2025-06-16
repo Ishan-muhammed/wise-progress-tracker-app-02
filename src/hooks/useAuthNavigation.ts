@@ -18,35 +18,56 @@ export const useAuthNavigation = (setError: (error: string | null) => void) => {
                           currentPath.includes('loading');
     
     if (shouldNavigate && userRoles.length > 0) {
-      // Force navigation with timeout to prevent hanging
+      console.log('Should navigate - executing navigation logic');
+      
       const performNavigation = () => {
-        if (userRoles.includes('admin')) {
-          console.log('Navigating to admin dashboard');
-          navigate('/admin-dashboard', { replace: true });
-        } else if (userRoles.includes('teacher')) {
-          console.log('Navigating to teacher dashboard');
-          navigate('/teacher-dashboard', { replace: true });
-        } else {
-          console.log('No valid roles found');
-          setError('No valid user roles found. Please contact an administrator.');
+        try {
+          if (userRoles.includes('admin')) {
+            console.log('Navigating to admin dashboard');
+            navigate('/admin-dashboard', { replace: true });
+            return true;
+          } else if (userRoles.includes('teacher')) {
+            console.log('Navigating to teacher dashboard');
+            navigate('/teacher-dashboard', { replace: true });
+            return true;
+          } else {
+            console.log('No valid roles found for navigation');
+            setError('No valid user roles found. Please contact an administrator.');
+            return false;
+          }
+        } catch (error) {
+          console.error('Navigation error:', error);
+          return false;
         }
       };
 
-      // Execute navigation immediately and with a backup timeout
-      performNavigation();
+      // Execute navigation immediately
+      const navigationSuccess = performNavigation();
       
-      // Backup navigation in case the first one fails
-      setTimeout(() => {
-        const stillOnWrongPage = window.location.pathname === '/' || 
-                                window.location.pathname === '/auth' || 
-                                window.location.pathname === '/login';
-        if (stillOnWrongPage) {
-          console.log('Backup navigation triggered');
+      // Backup navigation with increased delay if the first one fails
+      if (!navigationSuccess) {
+        setTimeout(() => {
+          console.log('Backup navigation triggered due to failure');
           performNavigation();
-        }
-      }, 1000);
+        }, 2000);
+      } else {
+        // Double-check navigation actually worked
+        setTimeout(() => {
+          const stillOnWrongPage = window.location.pathname === '/' || 
+                                  window.location.pathname === '/auth' || 
+                                  window.location.pathname === '/login';
+          if (stillOnWrongPage) {
+            console.log('Navigation verification failed - trying backup navigation');
+            performNavigation();
+          } else {
+            console.log('Navigation verification successful');
+          }
+        }, 1500);
+      }
     } else if (userRoles.length === 0 && shouldNavigate) {
       console.log('No roles found, staying on current page');
+    } else {
+      console.log('Navigation not needed - current path:', currentPath);
     }
   }, [navigate, setError]);
 
