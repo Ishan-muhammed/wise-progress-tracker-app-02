@@ -42,47 +42,26 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
   const {
     user, setUser, session, setSession, loading, setLoading,
     roles, setRoles, error, setError, hasRole, isAdmin,
-    isUnmountedRef, initTimeoutRef
+    isUnmountedRef
   } = useAuthState();
 
   const { navigateToAppropriate, navigate } = useAuthNavigation(setError);
   const { fetchUserRoles } = useAuthRoles(isUnmountedRef);
 
   const initializeAuth = useCallback(async () => {
-    console.log('Starting authentication initialization');
+    console.log('Starting simplified authentication initialization');
     setError(null);
     setLoading(true);
 
     try {
-      // Clear any existing timeout
-      if (initTimeoutRef.current) {
-        clearTimeout(initTimeoutRef.current);
-      }
-
-      // Reduced timeout to 5 seconds for faster feedback
-      initTimeoutRef.current = setTimeout(() => {
-        if (isUnmountedRef.current) return;
-        console.log('Authentication timeout reached after 5 seconds');
-        setError('Connection timeout. The authentication service may be temporarily unavailable.');
-        setLoading(false);
-      }, 5000);
-
-      // Test connection with a shorter timeout
-      const sessionPromise = supabase.auth.getSession();
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Request timeout')), 4000)
-      );
-
-      const { data: { session }, error: sessionError } = await Promise.race([
-        sessionPromise,
-        timeoutPromise
-      ]) as any;
+      // Simple session check without race conditions
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (isUnmountedRef.current) return;
       
       if (sessionError) {
         console.error('Session error:', sessionError);
-        setError(`Authentication failed: ${sessionError.message}`);
+        setError('Authentication failed. Please try again.');
         setLoading(false);
         return;
       }
@@ -102,12 +81,6 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
         setRoles([]);
       }
       
-      // Clear timeout on success
-      if (initTimeoutRef.current) {
-        clearTimeout(initTimeoutRef.current);
-        initTimeoutRef.current = null;
-      }
-      
       if (!isUnmountedRef.current) {
         setLoading(false);
         console.log('Authentication initialization complete');
@@ -115,14 +88,11 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
     } catch (e) {
       if (!isUnmountedRef.current) {
         console.error('Authentication error:', e);
-        const errorMessage = e instanceof Error && e.message === 'Request timeout' 
-          ? 'Connection timeout. Please check your internet connection and try again.'
-          : 'Failed to connect to the authentication service. Please check your internet connection.';
-        setError(errorMessage);
+        setError('Failed to connect to the authentication service. Please check your internet connection.');
         setLoading(false);
       }
     }
-  }, [fetchUserRoles, navigateToAppropriate, setError, setLoading, setSession, setUser, setRoles, isUnmountedRef, initTimeoutRef]);
+  }, [fetchUserRoles, navigateToAppropriate, setError, setLoading, setSession, setUser, setRoles, isUnmountedRef]);
 
   const retry = useCallback(() => {
     console.log('Retrying authentication');
@@ -165,7 +135,7 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
-    // Initialize auth
+    // Initialize auth only once
     initializeAuth();
 
     return () => {
