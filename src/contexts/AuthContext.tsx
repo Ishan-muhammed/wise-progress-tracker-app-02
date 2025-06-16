@@ -59,16 +59,24 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
         clearTimeout(initTimeoutRef.current);
       }
 
-      // Set timeout for faster feedback
+      // Reduced timeout to 5 seconds for faster feedback
       initTimeoutRef.current = setTimeout(() => {
         if (isUnmountedRef.current) return;
-        console.log('Authentication timeout reached');
-        setError('Connection timeout. Please check your internet connection and try again.');
+        console.log('Authentication timeout reached after 5 seconds');
+        setError('Connection timeout. The authentication service may be temporarily unavailable.');
         setLoading(false);
-      }, 8000);
+      }, 5000);
 
-      // Test connection
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      // Test connection with a shorter timeout
+      const sessionPromise = supabase.auth.getSession();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 4000)
+      );
+
+      const { data: { session }, error: sessionError } = await Promise.race([
+        sessionPromise,
+        timeoutPromise
+      ]) as any;
       
       if (isUnmountedRef.current) return;
       
@@ -107,7 +115,10 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
     } catch (e) {
       if (!isUnmountedRef.current) {
         console.error('Authentication error:', e);
-        setError('Failed to connect to the authentication service. Please try again.');
+        const errorMessage = e instanceof Error && e.message === 'Request timeout' 
+          ? 'Connection timeout. Please check your internet connection and try again.'
+          : 'Failed to connect to the authentication service. Please check your internet connection.';
+        setError(errorMessage);
         setLoading(false);
       }
     }

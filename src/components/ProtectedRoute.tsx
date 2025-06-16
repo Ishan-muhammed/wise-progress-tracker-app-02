@@ -16,11 +16,11 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
   const navigate = useNavigate();
   const [timeoutReached, setTimeoutReached] = useState(false);
 
-  // Add timeout to prevent infinite loading
+  // Reduced timeout to 10 seconds for ProtectedRoute
   useEffect(() => {
     const timeout = setTimeout(() => {
       setTimeoutReached(true);
-    }, 15000); // 15 second timeout for ProtectedRoute
+    }, 10000);
 
     return () => clearTimeout(timeout);
   }, []);
@@ -67,17 +67,24 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md">
-          <div className="text-lg mb-4 text-red-600">Authentication Error</div>
+          <div className="text-lg mb-4 text-red-600">Connection Error</div>
           <div className="text-sm text-gray-600 mb-6">{error}</div>
           <div className="space-x-4">
             <Button onClick={retry} className="bg-blue-500 hover:bg-blue-600">
-              Retry
+              Try Again
             </Button>
             <Button 
               onClick={() => window.location.reload()} 
               variant="outline"
             >
               Refresh Page
+            </Button>
+            <Button 
+              onClick={() => navigate("/auth")} 
+              variant="ghost"
+              className="text-sm"
+            >
+              Go to Login Page
             </Button>
           </div>
         </div>
@@ -99,9 +106,9 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
   if (timeoutReached && loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-lg mb-4">Loading took too long</div>
-          <div className="text-sm text-gray-600 mb-6">The authentication service may be experiencing issues.</div>
+        <div className="text-center max-w-md">
+          <div className="text-lg mb-4 text-red-600">Connection Timeout</div>
+          <div className="text-sm text-gray-600 mb-6">Unable to connect to the authentication service. Please check your internet connection.</div>
           <div className="space-x-4">
             <Button onClick={retry} className="bg-blue-500 hover:bg-blue-600">
               Try Again
@@ -111,6 +118,13 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
               variant="outline"
             >
               Refresh Page
+            </Button>
+            <Button 
+              onClick={() => navigate("/auth")} 
+              variant="ghost"
+              className="text-sm"
+            >
+              Go to Login Page
             </Button>
           </div>
         </div>
