@@ -47,19 +47,20 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
   const {
     user, setUser, session, setSession, loading, setLoading,
     roles, setRoles, error, setError, hasRole, isAdmin,
-    isUnmountedRef, isExplicitLogin, setIsExplicitLogin
+    isUnmountedRef, isExplicitLogin, setIsExplicitLogin, hasRolesFetched
   } = useAuthState();
 
-  const { fetchUserRoles } = useAuthRoles(isUnmountedRef);
+  const { fetchUserRoles, clearRoleCache } = useAuthRoles(isUnmountedRef);
 
   const logout = useCallback(async () => {
     console.log('Logging out user');
     setIsExplicitLogin(false);
+    clearRoleCache();
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('Logout error:', error);
     }
-  }, [setIsExplicitLogin]);
+  }, [setIsExplicitLogin, clearRoleCache]);
 
   const setExplicitLogin = useCallback((value: boolean) => {
     console.log('Setting explicit login:', value);
@@ -76,7 +77,7 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
     setError(null);
     
     if (session?.user) {
-      console.log('User authenticated, fetching roles...');
+      console.log('User authenticated, checking roles...');
       
       // Set explicit login flag for SIGNED_IN events (not for initial session restoration)
       if (event === 'SIGNED_IN') {
@@ -84,20 +85,27 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
         setIsExplicitLogin(true);
       }
       
-      try {
-        const userRoles = await fetchUserRoles(session.user.id);
-        console.log('Roles fetched successfully:', userRoles);
-        
-        if (!isUnmountedRef.current) {
-          setRoles(userRoles);
-          setLoading(false);
+      // Only fetch roles if we haven't already fetched them for this user
+      if (!hasRolesFetched(session.user.id)) {
+        try {
+          console.log('Fetching roles for user:', session.user.id);
+          const userRoles = await fetchUserRoles(session.user.id);
+          console.log('Roles fetched successfully:', userRoles);
+          
+          if (!isUnmountedRef.current) {
+            setRoles(userRoles, session.user.id);
+            setLoading(false);
+          }
+        } catch (error) {
+          console.error('Role fetch error:', error);
+          if (!isUnmountedRef.current) {
+            // Don't clear existing roles on fetch error, just set loading to false
+            setLoading(false);
+          }
         }
-      } catch (error) {
-        console.error('Role fetch error:', error);
-        if (!isUnmountedRef.current) {
-          setRoles([]);
-          setLoading(false);
-        }
+      } else {
+        console.log('Roles already fetched for user:', session.user.id);
+        setLoading(false);
       }
     } else {
       if (!isUnmountedRef.current) {
@@ -106,7 +114,7 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
         setIsExplicitLogin(false);
       }
     }
-  }, [fetchUserRoles, setSession, setUser, setError, setRoles, setLoading, isUnmountedRef, setIsExplicitLogin]);
+  }, [fetchUserRoles, setSession, setUser, setError, setRoles, setLoading, isUnmountedRef, setIsExplicitLogin, hasRolesFetched]);
 
   const retry = useCallback(() => {
     console.log('Retrying authentication');

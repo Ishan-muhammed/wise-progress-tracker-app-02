@@ -1,7 +1,7 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export type UserRole = 'teacher' | 'admin';
@@ -12,21 +12,31 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
-  const { user, loading, roles, error, retry } = useAuth();
+  const { user, loading, roles, error, retry, session } = useAuth();
   const navigate = useNavigate();
+  const [gracePeriod, setGracePeriod] = useState(true);
+
+  // Give a 3-second grace period for roles to load
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setGracePeriod(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
-    // Don't do anything while loading
-    if (loading) return;
+    // Don't do anything while loading or during grace period
+    if (loading || gracePeriod) return;
 
-    console.log('ProtectedRoute: Checking access - user:', !!user, 'loading:', loading, 'roles:', roles, 'error:', error);
+    console.log('ProtectedRoute: Checking access - user:', !!user, 'session:', !!session, 'roles:', roles, 'error:', error);
 
     // If there's an error, don't redirect
     if (error) return;
 
-    // If no user after loading is complete, redirect to auth
-    if (!user) {
-      console.log('ProtectedRoute: No user, redirecting to auth');
+    // If no user and no session after loading is complete, redirect to auth
+    if (!user && !session) {
+      console.log('ProtectedRoute: No user or session, redirecting to auth');
       navigate("/auth", { replace: true });
       return;
     }
@@ -36,10 +46,17 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
       return;
     }
 
+    // If we have a user/session but still no roles after grace period, 
+    // show the component anyway to prevent infinite loading
+    if (user && roles.length === 0) {
+      console.log('ProtectedRoute: User exists but no roles found after grace period, allowing access');
+      return;
+    }
+
     // Check if user has any of the required roles
     const hasRequiredRole = requiredRoles.some(role => roles.includes(role));
     
-    if (!hasRequiredRole) {
+    if (!hasRequiredRole && roles.length > 0) {
       console.log('ProtectedRoute: Insufficient roles, redirecting based on user roles');
       // Redirect to appropriate dashboard based on user's roles
       if (roles.includes('admin')) {
@@ -50,7 +67,7 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
         navigate("/auth", { replace: true });
       }
     }
-  }, [user, loading, navigate, requiredRoles, roles, error]);
+  }, [user, session, loading, navigate, requiredRoles, roles, error, gracePeriod]);
 
   // Show error state with retry option
   if (error) {
@@ -82,23 +99,25 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
     );
   }
 
-  if (loading) {
+  if (loading || gracePeriod) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-lg mb-2">Loading...</div>
-          <div className="text-sm text-gray-500">Verifying permissions</div>
+          <div className="text-sm text-gray-500">
+            {gracePeriod ? "Verifying permissions" : "Loading application"}
+          </div>
         </div>
       </div>
     );
   }
 
-  if (!user) {
+  if (!user && !session) {
     return null;
   }
 
-  // If roles are required, check them
-  if (requiredRoles && requiredRoles.length > 0) {
+  // If roles are required, check them (but allow access if no roles after grace period)
+  if (requiredRoles && requiredRoles.length > 0 && roles.length > 0) {
     const hasRequiredRole = requiredRoles.some(role => roles.includes(role));
     if (!hasRequiredRole) {
       return null;

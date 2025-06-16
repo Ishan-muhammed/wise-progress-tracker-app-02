@@ -7,14 +7,14 @@ import { AuthForm } from "@/components/auth/AuthForm";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { user, loading, error, roles, isExplicitLogin } = useAuth();
+  const { user, loading, error, roles, isExplicitLogin, session } = useAuth();
 
   useEffect(() => {
-    console.log('Login page - User:', !!user, 'Loading:', loading, 'Roles:', roles, 'Explicit login:', isExplicitLogin);
+    console.log('Login page - User:', !!user, 'Session:', !!session, 'Loading:', loading, 'Roles:', roles, 'Explicit login:', isExplicitLogin);
     
-    // Only navigate if user exists, has roles, not loading, AND this is an explicit login
-    if (!loading && user && roles.length > 0 && isExplicitLogin) {
-      console.log('Login: User detected with roles after explicit login, navigating...');
+    // Only navigate if user exists, session is valid, has roles, not loading, AND this is an explicit login
+    if (!loading && user && session && roles.length > 0 && isExplicitLogin) {
+      console.log('Login: User detected with valid session and roles after explicit login, navigating...');
       if (roles.includes('admin')) {
         console.log('Navigating to admin dashboard');
         navigate('/admin-dashboard', { replace: true });
@@ -23,7 +23,7 @@ const Login = () => {
         navigate('/teacher-dashboard', { replace: true });
       }
     }
-  }, [user, loading, roles, navigate, error, isExplicitLogin]);
+  }, [user, session, loading, roles, navigate, error, isExplicitLogin]);
 
   // Show loading state
   if (loading) {
