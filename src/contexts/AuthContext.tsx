@@ -60,49 +60,27 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
     if (session?.user) {
       console.log('Fetching user roles for:', session.user.id);
       
-      // Retry logic for role fetching
-      let retryCount = 0;
-      const maxRetries = 3;
-      
-      const fetchRolesWithRetry = async (): Promise<UserRole[]> => {
-        try {
-          const userRoles = await fetchUserRoles(session.user.id);
-          console.log('Successfully fetched roles:', userRoles);
-          return userRoles;
-        } catch (error) {
-          console.error(`Role fetch attempt ${retryCount + 1} failed:`, error);
-          retryCount++;
-          
-          if (retryCount < maxRetries) {
-            console.log(`Retrying role fetch in 1 second...`);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            return fetchRolesWithRetry();
-          }
-          throw error;
-        }
-      };
-
+      // Direct role check with immediate retry on failure
       try {
-        const userRoles = await fetchRolesWithRetry();
+        const userRoles = await fetchUserRoles(session.user.id);
+        console.log('Successfully fetched roles:', userRoles);
+        
         if (!isUnmountedRef.current) {
-          console.log('Setting roles:', userRoles);
           setRoles(userRoles);
           
-          // Navigate after roles are confirmed
+          // Navigate immediately after setting roles
           if (userRoles.length > 0) {
             console.log('Triggering navigation with roles:', userRoles);
-            // Small delay to ensure state is updated
-            setTimeout(() => {
-              navigateToAppropriate(userRoles);
-            }, 100);
+            navigateToAppropriate(userRoles);
           } else {
+            console.log('No roles found, showing error');
             setError('No user roles found. Please contact an administrator.');
           }
         }
       } catch (error) {
-        console.error('Final error fetching roles:', error);
+        console.error('Role fetch error:', error);
         if (!isUnmountedRef.current) {
-          setError('Failed to load user permissions. Please try again.');
+          setError('Failed to load user permissions. Please try signing in again.');
         }
       }
     } else {
@@ -121,11 +99,11 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
     setError(null);
     setLoading(true);
     
-    // Re-check session
+    // Clear session and force re-authentication
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
         console.error('Retry session error:', error);
-        setError('Failed to reconnect. Please refresh the page.');
+        setError('Failed to reconnect. Please sign in again.');
         setLoading(false);
       } else {
         handleAuthStateChange('RETRY', session);
@@ -144,7 +122,7 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
       if (error) {
         console.error('Initial session error:', error);
         if (!isUnmountedRef.current) {
-          setError('Authentication service unavailable. Please try again.');
+          setError('Authentication service unavailable. Please try signing in.');
           setLoading(false);
         }
       } else {
@@ -152,21 +130,14 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
       }
     });
 
-    // Increase timeout to 15 seconds and add better state checking
+    // Reduced timeout to 8 seconds with better error handling
     const timeoutId = setTimeout(() => {
       if (!isUnmountedRef.current && loading) {
-        console.log('Authentication timeout after 15 seconds - checking current state');
-        console.log('Current state - User:', !!user, 'Roles:', roles.length);
-        
-        // If we have a user but no roles, that's the issue
-        if (user && roles.length === 0) {
-          setError('Failed to load user roles. Please try refreshing the page.');
-        } else if (!user) {
-          setError('Authentication timeout. Please refresh the page.');
-        }
+        console.log('Authentication timeout after 8 seconds');
+        setError('Authentication timeout. Please sign in.');
         setLoading(false);
       }
-    }, 15000); // Increased to 15 seconds
+    }, 8000);
 
     return () => {
       console.log('Cleaning up auth subscription');

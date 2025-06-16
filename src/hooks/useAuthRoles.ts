@@ -10,20 +10,7 @@ export const useAuthRoles = (isUnmountedRef: React.RefObject<boolean>) => {
     console.log('Fetching roles for user:', userId);
     
     try {
-      // Test the connection first
-      const { data: testData, error: testError } = await supabase
-        .from('user_roles')
-        .select('count')
-        .limit(1);
-        
-      if (testError) {
-        console.error('Database connection test failed:', testError);
-        throw new Error(`Database connection failed: ${testError.message}`);
-      }
-      
-      console.log('Database connection test passed');
-
-      // Now fetch the actual roles
+      // Direct query with better error handling
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
@@ -33,6 +20,10 @@ export const useAuthRoles = (isUnmountedRef: React.RefObject<boolean>) => {
 
       if (error) {
         console.error('Error fetching user roles:', error);
+        // If it's a permission error, return empty array to trigger proper error handling
+        if (error.code === 'PGRST116' || error.message.includes('permission')) {
+          throw new Error('Permission denied: Unable to fetch user roles');
+        }
         throw new Error(`Role fetch failed: ${error.message}`);
       }
 
