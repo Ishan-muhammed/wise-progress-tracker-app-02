@@ -1,5 +1,5 @@
 
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface MonthlyChartProps {
   data: Array<{
@@ -24,7 +24,7 @@ const TeacherMonthlyChart = ({ data }: MonthlyChartProps) => {
         <AreaChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
           <defs>
             <linearGradient id="monthlyGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#059669" stopOpacity={0.5}/>
+              <stop offset="5%" stopColor="#059669" stopOpacity={0.6}/>
               <stop offset="95%" stopColor="#059669" stopOpacity={0.1}/>
             </linearGradient>
           </defs>
@@ -59,14 +59,8 @@ const TeacherMonthlyChart = ({ data }: MonthlyChartProps) => {
             stroke="#059669" 
             strokeWidth={2}
             fill="url(#monthlyGradient)"
-          />
-          <Line 
-            type="monotone" 
-            dataKey="total" 
-            stroke="#6b7280" 
-            strokeWidth={1}
-            strokeDasharray="5 5"
-            dot={false}
+            dot={{ fill: '#059669', strokeWidth: 2, r: 4 }}
+            activeDot={{ r: 6, fill: '#059669' }}
           />
         </AreaChart>
       </ResponsiveContainer>
