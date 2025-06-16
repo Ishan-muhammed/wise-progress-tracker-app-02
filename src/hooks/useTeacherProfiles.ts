@@ -13,6 +13,7 @@ interface TeacherProfile {
 export const useTeacherProfiles = () => {
   const [profiles, setProfiles] = useState<TeacherProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const isUnmountedRef = useRef(false);
 
@@ -40,8 +41,11 @@ export const useTeacherProfiles = () => {
 
     try {
       setLoading(true);
+      setError(null);
 
-      // Fetch all users who have the teacher role (including those who also have admin role)
+      console.log('Fetching teacher profiles...');
+
+      // Use proper JOIN syntax instead of the problematic nested select
       const { data, error } = await supabase
         .from('profiles')
         .select(`
@@ -49,17 +53,22 @@ export const useTeacherProfiles = () => {
           name, 
           email, 
           gender, 
-          age,
-          user_roles!inner(role)
+          age
         `)
-        .eq('user_roles.role', 'teacher');
+        .in('id', 
+          supabase
+            .from('user_roles')
+            .select('user_id')
+            .eq('role', 'teacher')
+        );
 
       if (signal.aborted || isUnmountedRef.current) return;
 
       if (error) {
         console.error('Error fetching teacher profiles:', error);
+        setError(`Failed to fetch teacher profiles: ${error.message}`);
       } else {
-        // Transform the data to match our interface
+        console.log('Teacher profiles fetched successfully:', data);
         const teacherProfiles = data?.map((profile: any) => ({
           id: profile.id,
           name: profile.name,
@@ -75,6 +84,7 @@ export const useTeacherProfiles = () => {
     } catch (error) {
       if (!(error instanceof DOMException && error.name === "AbortError") && !isUnmountedRef.current) {
         console.error('Error fetching teacher profiles:', error);
+        setError(`Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     } finally {
       if (!isUnmountedRef.current) {
@@ -92,5 +102,9 @@ export const useTeacherProfiles = () => {
     return teacher ? teacher.name : 'Unknown Teacher';
   }, [profiles]);
 
-  return { profiles, loading, getTeacherName };
+  const refetch = useCallback(() => {
+    fetchProfiles();
+  }, [fetchProfiles]);
+
+  return { profiles, loading, error, getTeacherName, refetch };
 };
