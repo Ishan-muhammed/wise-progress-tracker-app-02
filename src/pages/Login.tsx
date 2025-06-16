@@ -7,14 +7,19 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { user, loading, error, retry } = useAuth();
+  const { user, loading, error, retry, roles } = useAuth();
 
   useEffect(() => {
-    // Only redirect if user exists and loading is complete
-    if (!loading && user) {
-      console.log('Login: User detected, letting AuthContext handle navigation');
+    // If user exists and has roles, navigate appropriately
+    if (!loading && user && roles.length > 0) {
+      console.log('Login: User detected with roles, navigating...');
+      if (roles.includes('admin')) {
+        navigate('/admin-dashboard');
+      } else if (roles.includes('teacher')) {
+        navigate('/teacher-dashboard');
+      }
     }
-  }, [user, loading]);
+  }, [user, loading, roles, navigate]);
 
   // Show error state with retry option
   if (error) {
@@ -81,11 +86,11 @@ const Login = () => {
     );
   }
 
-  // If user exists, show a brief message while AuthContext handles navigation
+  // If user exists but still on login page, show redirecting message
   if (user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Redirecting...</div>
+        <div className="text-lg">Redirecting to dashboard...</div>
       </div>
     );
   }

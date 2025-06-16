@@ -45,16 +45,16 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
     isUnmountedRef
   } = useAuthState();
 
-  const { navigateToAppropriate, navigate } = useAuthNavigation(setError);
+  const { navigateToAppropriate } = useAuthNavigation(setError);
   const { fetchUserRoles } = useAuthRoles(isUnmountedRef);
 
   const initializeAuth = useCallback(async () => {
-    console.log('Starting simplified authentication initialization');
+    if (isUnmountedRef.current) return;
+    
+    console.log('Initializing authentication...');
     setError(null);
-    setLoading(true);
 
     try {
-      // Simple session check without race conditions
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (isUnmountedRef.current) return;
@@ -66,7 +66,7 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      console.log('Session retrieved:', session?.user?.id || 'No session');
+      console.log('Session check complete:', session?.user?.id || 'No session');
       setSession(session);
       setUser(session?.user ?? null);
 
@@ -75,6 +75,7 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
         const userRoles = await fetchUserRoles(session.user.id);
         if (!isUnmountedRef.current) {
           setRoles(userRoles);
+          console.log('User roles loaded:', userRoles);
           navigateToAppropriate(userRoles);
         }
       } else {
@@ -88,16 +89,17 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
     } catch (e) {
       if (!isUnmountedRef.current) {
         console.error('Authentication error:', e);
-        setError('Failed to connect to the authentication service. Please check your internet connection.');
+        setError('Failed to initialize authentication. Please try again.');
         setLoading(false);
       }
     }
   }, [fetchUserRoles, navigateToAppropriate, setError, setLoading, setSession, setUser, setRoles, isUnmountedRef]);
 
   const retry = useCallback(() => {
-    console.log('Retrying authentication');
+    console.log('Retrying authentication initialization');
+    setLoading(true);
     initializeAuth();
-  }, [initializeAuth]);
+  }, [initializeAuth, setLoading]);
 
   useEffect(() => {
     console.log('Setting up auth state listener');
@@ -123,9 +125,6 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
         } else {
           if (!isUnmountedRef.current) {
             setRoles([]);
-            if (event === 'SIGNED_OUT') {
-              navigate('/auth');
-            }
           }
         }
         
@@ -135,14 +134,14 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
-    // Initialize auth only once
+    // Only initialize once
     initializeAuth();
 
     return () => {
       console.log('Cleaning up auth subscription');
       subscription.unsubscribe();
     };
-  }, [initializeAuth, fetchUserRoles, navigateToAppropriate, navigate, setSession, setUser, setError, setRoles, setLoading, isUnmountedRef]);
+  }, [initializeAuth, fetchUserRoles, navigateToAppropriate, setSession, setUser, setError, setRoles, setLoading, isUnmountedRef]);
 
   const contextValue = React.useMemo(() => ({
     user,
