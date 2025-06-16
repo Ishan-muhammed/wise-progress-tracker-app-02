@@ -1,7 +1,5 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useTeacherProfiles } from "@/hooks/useTeacherProfiles";
 import { useLessons } from "@/hooks/useLessons";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Filter, Download, UserPlus, Edit, MoreHorizontal, RefreshCw } from "lucide-react";
+import { Search, Filter, Download, UserPlus, Edit, MoreHorizontal, RefreshCw, Mail, BookOpen, Users, Calendar, LayoutGrid, List } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,13 +17,31 @@ const TeacherManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   const { toast } = useToast();
+
+  // Calculate teacher activity status
+  const getTeacherStatus = (teacherId: string) => {
+    const teacherLessons = lessons.filter(lesson => lesson.user_id === teacherId);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const recentLessons = teacherLessons.filter(lesson => 
+      new Date(lesson.date) >= thirtyDaysAgo
+    );
+    
+    return recentLessons.length > 0 ? 'active' : 'inactive';
+  };
 
   // Filter teachers based on search and filters
   const filteredTeachers = teachers.filter(teacher => {
     const matchesSearch = teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          teacher.email.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+    
+    const status = getTeacherStatus(teacher.id);
+    const matchesStatus = filterStatus === "all" || status === filterStatus;
+    
+    return matchesSearch && matchesStatus;
   });
 
   const handleRefresh = () => {
@@ -83,7 +99,11 @@ const TeacherManagement = () => {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-64 w-full" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <Skeleton key={i} className="h-64 w-full" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -111,14 +131,15 @@ const TeacherManagement = () => {
     const completedLessons = teacherLessons.filter(lesson => lesson.completed);
     const totalLessons = teacherLessons.length;
     const completionRate = totalLessons > 0 ? Math.round((completedLessons.length / totalLessons) * 100) : 0;
-    
-    // Get unique subjects taught by this teacher
     const subjects = [...new Set(teacherLessons.map(lesson => lesson.subject))];
-    
-    // Get unique classes taught by this teacher
     const classes = [...new Set(teacherLessons.map(lesson => lesson.class))].sort((a, b) => 
       parseInt(a) - parseInt(b)
     );
+    const status = getTeacherStatus(teacher.id);
+
+    // Get last active date
+    const sortedLessons = teacherLessons.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const lastActiveDate = sortedLessons.length > 0 ? new Date(sortedLessons[0].date) : null;
 
     return {
       ...teacher,
@@ -126,7 +147,9 @@ const TeacherManagement = () => {
       completedLessons: completedLessons.length,
       completionRate,
       subjects,
-      classes
+      classes,
+      status,
+      lastActiveDate
     };
   });
 
@@ -167,25 +190,23 @@ const TeacherManagement = () => {
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Lessons</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Active Teachers</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{lessons.length}</div>
-            <p className="text-xs text-gray-500">All time</p>
+            <div className="text-2xl font-bold text-green-600">
+              {teacherStats.filter(t => t.status === 'active').length}
+            </div>
+            <p className="text-xs text-gray-500">Last 30 days</p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Completed Lessons</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Total Lessons</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {lessons.filter(lesson => lesson.completed).length}
-            </div>
-            <p className="text-xs text-gray-500">
-              {lessons.length > 0 ? Math.round((lessons.filter(lesson => lesson.completed).length / lessons.length) * 100) : 0}% completion rate
-            </p>
+            <div className="text-2xl font-bold">{lessons.length}</div>
+            <p className="text-xs text-gray-500">All time</p>
           </CardContent>
         </Card>
 
@@ -214,19 +235,9 @@ const TeacherManagement = () => {
           />
         </div>
         <div className="flex gap-2">
-          <Select value={filterRole} onValueChange={setFilterRole}>
-            <SelectTrigger className="w-[140px]">
-              <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Roles</SelectItem>
-              <SelectItem value="teacher">Teacher</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-            </SelectContent>
-          </Select>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-[140px]">
+              <Filter className="h-4 w-4 mr-2" />
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -235,10 +246,28 @@ const TeacherManagement = () => {
               <SelectItem value="inactive">Inactive</SelectItem>
             </SelectContent>
           </Select>
+          <div className="flex border rounded-md">
+            <Button
+              variant={viewMode === "cards" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("cards")}
+              className="rounded-r-none"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "table" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("table")}
+              className="rounded-l-none"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Teachers Table */}
+      {/* Teacher Cards/Directory */}
       <Card>
         <CardHeader>
           <CardTitle>Teacher Directory ({filteredTeachers.length} teachers)</CardTitle>
@@ -253,110 +282,28 @@ const TeacherManagement = () => {
               </Button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Teacher</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Demographics</TableHead>
-                    <TableHead>Classes</TableHead>
-                    <TableHead>Subjects</TableHead>
-                    <TableHead>Performance</TableHead>
-                    <TableHead>Completion Rate</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {teacherStats.map((teacher) => (
-                    <TableRow key={teacher.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{teacher.name}</div>
-                          <div className="text-sm text-gray-500">ID: {teacher.id.slice(0, 8)}...</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {teacherStats.map((teacher) => (
+                <Card key={teacher.id} className="hover:shadow-lg transition-shadow duration-200">
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg text-gray-900">{teacher.name}</h3>
+                        <div className="flex items-center text-sm text-gray-600 mt-1">
+                          <Mail className="h-4 w-4 mr-1" />
+                          {teacher.email}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <div>{teacher.email}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {teacher.gender && (
-                            <div>Gender: {teacher.gender}</div>
-                          )}
-                          {teacher.age && (
-                            <div>Age: {teacher.age}</div>
-                          )}
-                          {!teacher.gender && !teacher.age && (
-                            <span className="text-gray-400">No data</span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {teacher.classes.length > 0 ? (
-                            teacher.classes.slice(0, 3).map(cls => (
-                              <Badge key={cls} variant="outline" className="text-xs">
-                                Class {cls}
-                              </Badge>
-                            ))
-                          ) : (
-                            <span className="text-gray-400 text-sm">No classes</span>
-                          )}
-                          {teacher.classes.length > 3 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{teacher.classes.length - 3} more
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {teacher.subjects.length > 0 ? (
-                            teacher.subjects.slice(0, 2).map(subject => (
-                              <Badge key={subject} variant="secondary" className="text-xs">
-                                {subject}
-                              </Badge>
-                            ))
-                          ) : (
-                            <span className="text-gray-400 text-sm">No subjects</span>
-                          )}
-                          {teacher.subjects.length > 2 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{teacher.subjects.length - 2} more
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <div className="font-medium">{teacher.completedLessons}/{teacher.totalLessons}</div>
-                          <div className="text-gray-500">lessons</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <div className="text-sm font-medium">
-                            {teacher.completionRate}%
-                          </div>
-                          <div className="w-16 bg-gray-200 rounded-full h-2">
-                            <div 
-                              className={`h-2 rounded-full transition-all duration-300 ${
-                                teacher.completionRate >= 80 ? 'bg-green-600' :
-                                teacher.completionRate >= 60 ? 'bg-yellow-500' :
-                                'bg-red-500'
-                              }`}
-                              style={{ width: `${teacher.completionRate}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <Badge 
+                          variant={teacher.status === 'active' ? 'default' : 'secondary'}
+                          className={teacher.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}
+                        >
+                          {teacher.status === 'active' ? 'Active' : 'Inactive'}
+                        </Badge>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -371,16 +318,99 @@ const TeacherManagement = () => {
                             <DropdownMenuItem>
                               Reset Password
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600">
-                              Disable Account
-                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="space-y-4">
+                    {/* Demographics */}
+                    {(teacher.gender || teacher.age) && (
+                      <div className="text-sm text-gray-600">
+                        {teacher.gender && <span>Gender: {teacher.gender}</span>}
+                        {teacher.gender && teacher.age && <span> • </span>}
+                        {teacher.age && <span>Age: {teacher.age}</span>}
+                      </div>
+                    )}
+
+                    {/* Subjects */}
+                    <div>
+                      <div className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                        <BookOpen className="h-4 w-4 mr-1" />
+                        Subjects ({teacher.subjects.length})
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {teacher.subjects.length > 0 ? (
+                          teacher.subjects.slice(0, 3).map(subject => (
+                            <Badge key={subject} variant="secondary" className="text-xs">
+                              {subject}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-gray-400 text-sm">No subjects assigned</span>
+                        )}
+                        {teacher.subjects.length > 3 && (
+                          <Badge variant="secondary" className="text-xs">
+                            +{teacher.subjects.length - 3} more
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Assigned Classes */}
+                    <div>
+                      <div className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                        <Users className="h-4 w-4 mr-1" />
+                        Classes ({teacher.classes.length})
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {teacher.classes.length > 0 ? (
+                          teacher.classes.slice(0, 4).map(cls => (
+                            <Badge key={cls} variant="outline" className="text-xs">
+                              Class {cls}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-gray-400 text-sm">No classes assigned</span>
+                        )}
+                        {teacher.classes.length > 4 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{teacher.classes.length - 4} more
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Performance Stats */}
+                    <div className="border-t pt-3">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-medium text-gray-700">Performance</span>
+                        <span className="text-sm font-semibold">{teacher.completionRate}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                        <div 
+                          className={`h-2 rounded-full transition-all duration-300 ${
+                            teacher.completionRate >= 80 ? 'bg-green-600' :
+                            teacher.completionRate >= 60 ? 'bg-yellow-500' :
+                            'bg-red-500'
+                          }`}
+                          style={{ width: `${teacher.completionRate}%` }}
+                        ></div>
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-600">
+                        <span>{teacher.completedLessons}/{teacher.totalLessons} lessons</span>
+                        {teacher.lastActiveDate && (
+                          <span className="flex items-center">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {teacher.lastActiveDate.toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
         </CardContent>
