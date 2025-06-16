@@ -56,34 +56,29 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
     setError(null);
     
     if (session?.user) {
-      console.log('Fetching user roles for:', session.user.id);
+      console.log('User authenticated, fetching roles...');
       
       try {
         const userRoles = await fetchUserRoles(session.user.id);
-        console.log('Successfully fetched roles:', userRoles);
+        console.log('Roles fetched successfully:', userRoles);
         
         if (!isUnmountedRef.current) {
           setRoles(userRoles);
-          
-          if (userRoles.length === 0) {
-            console.log('No roles found for user');
-            setError('No user roles found. Please contact an administrator.');
-          }
+          setLoading(false);
         }
       } catch (error) {
         console.error('Role fetch error:', error);
         if (!isUnmountedRef.current) {
-          setError('Failed to load user permissions. Please contact an administrator.');
+          // Don't set error for role fetching issues, just use empty roles
+          setRoles([]);
+          setLoading(false);
         }
       }
     } else {
       if (!isUnmountedRef.current) {
         setRoles([]);
+        setLoading(false);
       }
-    }
-    
-    if (!isUnmountedRef.current) {
-      setLoading(false);
     }
   }, [fetchUserRoles, setSession, setUser, setError, setRoles, setLoading, isUnmountedRef]);
 
@@ -108,6 +103,7 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
+    // Get initial session without timeout
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
         console.error('Initial session error:', error);
@@ -120,20 +116,11 @@ const AuthProviderImpl = ({ children }: { children: React.ReactNode }) => {
       }
     });
 
-    const timeoutId = setTimeout(() => {
-      if (!isUnmountedRef.current && loading) {
-        console.log('Authentication timeout after 5 seconds');
-        setError('Authentication timeout. Please sign in.');
-        setLoading(false);
-      }
-    }, 5000);
-
     return () => {
       console.log('Cleaning up auth subscription');
       subscription.unsubscribe();
-      clearTimeout(timeoutId);
     };
-  }, []);
+  }, [handleAuthStateChange, isUnmountedRef, setError, setLoading]);
 
   const contextValue = React.useMemo(() => ({
     user,

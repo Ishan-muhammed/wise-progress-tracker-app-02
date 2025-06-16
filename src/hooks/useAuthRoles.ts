@@ -10,21 +10,24 @@ export const useAuthRoles = (isUnmountedRef: React.RefObject<boolean>) => {
     console.log('Fetching roles for user:', userId);
     
     try {
-      // Direct query with better error handling
-      const { data, error } = await supabase
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Role fetch timeout')), 10000)
+      );
+
+      const queryPromise = supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId);
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
 
       console.log('Role query result - Data:', data, 'Error:', error);
 
       if (error) {
         console.error('Error fetching user roles:', error);
-        // If it's a permission error, return empty array to trigger proper error handling
-        if (error.code === 'PGRST116' || error.message.includes('permission')) {
-          throw new Error('Permission denied: Unable to fetch user roles');
-        }
-        throw new Error(`Role fetch failed: ${error.message}`);
+        // Return empty array instead of throwing for better UX
+        return [];
       }
 
       const roles = data?.map(r => r.role as UserRole) || [];
@@ -33,7 +36,8 @@ export const useAuthRoles = (isUnmountedRef: React.RefObject<boolean>) => {
       return roles;
     } catch (error) {
       console.error('Exception fetching user roles:', error);
-      throw error; // Re-throw to allow retry logic
+      // Return empty array instead of throwing to prevent blocking
+      return [];
     }
   }, [isUnmountedRef]);
 

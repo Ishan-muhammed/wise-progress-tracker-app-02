@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,39 +27,46 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter both email and password.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
+    console.log('AuthForm: Starting login for:', email);
 
     try {
-      console.log('AuthForm: Attempting login for:', email);
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
       if (error) {
         console.error('AuthForm: Login error:', error);
-        toast({
-          title: "Login Failed",
-          description: error.message,
-          variant: "destructive",
-        });
-        return;
+        throw error;
       }
 
-      if (data.user) {
-        console.log('AuthForm: Login successful for user:', data.user.id);
-        toast({
-          title: "Login Successful",
-          description: "Welcome back!",
-        });
-        
-        // Don't navigate here - let AuthContext handle it
+      if (!data.user) {
+        throw new Error('Login failed - no user returned');
       }
-    } catch (err) {
-      console.error('AuthForm: Unexpected login error:', err);
+
+      console.log('AuthForm: Login successful for user:', data.user.id);
+      toast({
+        title: "Login Successful",
+        description: "Welcome back!",
+      });
+      
+      // Don't navigate here - let AuthContext handle it
+    } catch (error: any) {
+      console.error('AuthForm: Login failed:', error);
       toast({
         title: "Login Failed",
-        description: "An unexpected error occurred. Please try again.",
+        description: error.message || "Please check your credentials and try again.",
         variant: "destructive",
       });
     } finally {
@@ -113,7 +121,7 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
       const redirectUrl = `${window.location.origin}/`;
 
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: email.trim(),
         password,
         options: {
           emailRedirectTo: redirectUrl,
@@ -129,12 +137,7 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
 
       if (error) {
         console.error('AuthForm: Signup error:', error);
-        toast({
-          title: "Signup Failed",
-          description: error.message,
-          variant: "destructive",
-        });
-        return;
+        throw error;
       }
 
       console.log('AuthForm: Signup successful, user ID:', data.user?.id);
@@ -164,11 +167,11 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
       });
       onToggleMode();
       
-    } catch (err) {
-      console.error('AuthForm: Unexpected signup error:', err);
+    } catch (error: any) {
+      console.error('AuthForm: Signup failed:', error);
       toast({
         title: "Signup Failed",
-        description: "An unexpected error occurred. Please try again.",
+        description: error.message || "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
