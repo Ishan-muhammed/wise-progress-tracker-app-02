@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, User, BookOpen, CheckCircle, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,11 +9,22 @@ import Header from "@/components/Header";
 import TeacherWeeklyChart from "@/components/teacher-profile/TeacherWeeklyChart";
 import TeacherMonthlyChart from "@/components/teacher-profile/TeacherMonthlyChart";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from "react";
 
 const TeacherProfile = () => {
   const { teacherId } = useParams<{ teacherId: string }>();
   const navigate = useNavigate();
-  const { teacher, totalLessons, completedLessons, completionRate, weeklyData, monthlyData, loading } = useTeacherData(teacherId || '');
+  const [weeklyStartDate, setWeeklyStartDate] = useState<Date>(new Date());
+  const [monthlyStartDate, setMonthlyStartDate] = useState<Date>(new Date());
+  
+  const { teacher, totalLessons, completedLessons, completionRate, weeklyData, monthlyData, loading } = useTeacherData(
+    teacherId || '', 
+    { 
+      weeklyStartDate, 
+      monthlyStartDate,
+      useSampleData: true 
+    }
+  );
 
   if (loading) {
     return (
@@ -170,11 +180,14 @@ const TeacherProfile = () => {
             <CardHeader>
               <CardTitle className="text-lg flex items-center">
                 <Calendar className="h-5 w-5 mr-2 text-green-600" />
-                Weekly Performance
+                Weekly Class Performance
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <TeacherWeeklyChart data={weeklyData} />
+              <TeacherWeeklyChart 
+                data={weeklyData} 
+                onDateRangeChange={setWeeklyStartDate}
+              />
             </CardContent>
           </Card>
 
@@ -183,11 +196,14 @@ const TeacherProfile = () => {
             <CardHeader>
               <CardTitle className="text-lg flex items-center">
                 <Calendar className="h-5 w-5 mr-2 text-green-600" />
-                Monthly Performance
+                Monthly Class Performance
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <TeacherMonthlyChart data={monthlyData} />
+              <TeacherMonthlyChart 
+                data={monthlyData} 
+                onDateRangeChange={setMonthlyStartDate}
+              />
             </CardContent>
           </Card>
         </div>
