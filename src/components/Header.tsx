@@ -109,15 +109,6 @@ const Header = () => {
                 e.currentTarget.style.display = 'none';
               }}
             />
-            <img 
-              src="/lovable-uploads/f907cb40-9d71-4b80-9bec-991a8da0f133.png" 
-              alt="WISE Text Logo" 
-              className="h-8 w-auto object-contain"
-              onError={(e) => {
-                console.error("WISE text logo failed to load");
-                e.currentTarget.style.display = 'none';
-              }}
-            />
           </div>
           <div className="flex items-center space-x-4">
             {/* Show a skeleton while loading, error if failed, otherwise welcome */}
