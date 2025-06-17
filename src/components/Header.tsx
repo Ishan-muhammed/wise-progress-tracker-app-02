@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -102,23 +101,13 @@ const Header = () => {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-4">
             <img 
-              src="/lovable-uploads/05804ce4-b7d4-4f38-a4c7-a3780fdc1f30.png" 
+              src="/lovable-uploads/46ad7beb-2b50-45ac-8fa4-d16b0ed552bb.png" 
               alt="WISE Logo" 
-              className="h-10 w-auto object-contain"
+              className="h-8 w-auto"
             />
             <span className="text-gray-600">Islamic Studies Progress Tracking</span>
           </div>
           <div className="flex items-center space-x-4">
-            {/* Show a skeleton while loading, error if failed, otherwise welcome */}
-            <span className="text-sm text-gray-600">
-              {loading ? (
-                <Skeleton className="w-24 h-5" />
-              ) : error ? (
-                <span className="text-red-500">{error}</span>
-              ) : (
-                <>Welcome, {welcomeText} ({roles.join(", ")})</>
-              )}
-            </span>
             {showMenu && (
               <Menubar>
                 <MenubarMenu>
@@ -141,6 +130,16 @@ const Header = () => {
                 </MenubarMenu>
               </Menubar>
             )}
+            {/* Show a skeleton while loading, error if failed, otherwise welcome */}
+            <span className="text-sm text-gray-600">
+              {loading ? (
+                <Skeleton className="w-24 h-5" />
+              ) : error ? (
+                <span className="text-red-500">{error}</span>
+              ) : (
+                <>Welcome, {welcomeText} ({roles.join(", ")})</>
+              )}
+            </span>
             <Button variant="outline" onClick={handleLogout}>
               Logout
             </Button>
