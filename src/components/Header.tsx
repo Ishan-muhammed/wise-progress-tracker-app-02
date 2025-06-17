@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -101,7 +100,11 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold text-green-700">WISE</h1>
+            <img 
+              src="/lovable-uploads/46ad7beb-2b50-45ac-8fa4-d16b0ed552bb.png" 
+              alt="WISE Logo" 
+              className="h-8 w-auto"
+            />
             <span className="text-gray-600">Islamic Studies Progress Tracking</span>
           </div>
           <div className="flex items-center space-x-4">
