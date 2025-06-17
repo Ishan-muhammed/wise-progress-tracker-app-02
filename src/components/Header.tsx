@@ -101,13 +101,27 @@ const Header = () => {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-4">
             <img 
-              src="/lovable-uploads/46ad7beb-2b50-45ac-8fa4-d16b0ed552bb.png" 
+              src="/lovable-uploads/508b2a42-9e0e-4218-93ca-2c5f23a18126.png" 
               alt="WISE Logo" 
-              className="h-8 w-auto"
+              className="h-10 w-auto object-contain"
+              onError={(e) => {
+                console.error("Logo failed to load");
+                e.currentTarget.style.display = 'none';
+              }}
             />
             <span className="text-gray-600">Islamic Studies Progress Tracking</span>
           </div>
           <div className="flex items-center space-x-4">
+            {/* Show a skeleton while loading, error if failed, otherwise welcome */}
+            <span className="text-sm text-gray-600">
+              {loading ? (
+                <Skeleton className="w-24 h-5" />
+              ) : error ? (
+                <span className="text-red-500">{error}</span>
+              ) : (
+                <>Welcome, {welcomeText} ({roles.join(", ")})</>
+              )}
+            </span>
             {showMenu && (
               <Menubar>
                 <MenubarMenu>
@@ -130,16 +144,6 @@ const Header = () => {
                 </MenubarMenu>
               </Menubar>
             )}
-            {/* Show a skeleton while loading, error if failed, otherwise welcome */}
-            <span className="text-sm text-gray-600">
-              {loading ? (
-                <Skeleton className="w-24 h-5" />
-              ) : error ? (
-                <span className="text-red-500">{error}</span>
-              ) : (
-                <>Welcome, {welcomeText} ({roles.join(", ")})</>
-              )}
-            </span>
             <Button variant="outline" onClick={handleLogout}>
               Logout
             </Button>
