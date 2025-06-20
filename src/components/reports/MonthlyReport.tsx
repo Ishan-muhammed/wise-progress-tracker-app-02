@@ -60,11 +60,9 @@ const MonthlyReport = () => {
         class: lesson.class,
         subject: lesson.subject,
         completed: 0,
-        total: 0,
         totalLessonsInSyllabus: getTotalLessons(lesson.subject, lesson.class)
       };
     }
-    summary[key].total++;
     if (lesson.completed) summary[key].completed++;
   });
 
@@ -218,7 +216,6 @@ const MonthlyReport = () => {
               <TableRow>
                 <TableHead>Class</TableHead>
                 <TableHead>Subject</TableHead>
-                <TableHead>Monthly Lessons</TableHead>
                 <TableHead>Completed</TableHead>
                 <TableHead>Total Lessons (Syllabus)</TableHead>
               </TableRow>
@@ -228,7 +225,6 @@ const MonthlyReport = () => {
                 <TableRow key={index}>
                   <TableCell>Class {item.class}</TableCell>
                   <TableCell>{item.subject}</TableCell>
-                  <TableCell>{item.total}</TableCell>
                   <TableCell>{item.completed}</TableCell>
                   <TableCell>{item.totalLessonsInSyllabus}</TableCell>
                 </TableRow>
