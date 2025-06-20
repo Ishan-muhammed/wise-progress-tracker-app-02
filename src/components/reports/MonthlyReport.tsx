@@ -89,7 +89,7 @@ const MonthlyReport = () => {
         </div>
         <div className="mt-4 flex flex-col md:flex-row gap-4 md:items-center">
           <div className="flex flex-col md:flex-row gap-2 md:items-center">
-            <span className="text-muted-foreground text-sm py-[15px]">Academic Year:</span>
+            <span className="text-muted-foreground text-sm py-[20px] px-[12px]">Academic Year:</span>
             <Select value={selectedAcademicYear} onValueChange={setSelectedAcademicYear}>
               <SelectTrigger className="max-w-xs">
                 <SelectValue>
