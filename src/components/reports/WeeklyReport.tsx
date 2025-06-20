@@ -1,20 +1,14 @@
-import { useState, useMemo, useCallback, useRef } from "react";
+
+import { useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
 import { formatDateToString } from "@/utils/dateUtils";
 import { useLessonsInDateRange } from "@/hooks/useLessonsInDateRange";
-import { generateTablePDF } from "@/utils/pdfUtils";
-import { useToast } from "@/hooks/use-toast";
 import WeeklyReportHeader from "./WeeklyReportHeader";
 import WeeklyReportContent from "./WeeklyReportContent";
 
 const WeeklyReport = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedClass, setSelectedClass] = useState<string>("all");
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  const reportRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
   
   // Calculate week range based on selected date - memoized
   const { weekStart, weekEnd, weekStartStr, weekEndStr } = useMemo(() => {
@@ -114,65 +108,21 @@ const WeeklyReport = () => {
     setSelectedDate(date);
   }, []);
 
-  const handleDownloadPDF = async () => {
-    if (!reportRef.current || filteredLessons.length === 0) {
-      toast({
-        title: "Error",
-        description: "No data to export",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsGeneratingPDF(true);
-    try {
-      const filename = `weekly-report-${weekStartStr}-to-${weekEndStr}.pdf`;
-      const title = `Weekly Report (${weekStartStr} - ${weekEndStr})`;
-      
-      await generateTablePDF(reportRef.current, filename, title);
-      
-      toast({
-        title: "Success",
-        description: "PDF downloaded successfully"
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to generate PDF",
-        variant: "destructive"
-      });
-    } finally {
-      setIsGeneratingPDF(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <CardTitle>
-              <WeeklyReportHeader
-                weekStart={weekStart}
-                weekEnd={weekEnd}
-                selectedClass={selectedClass}
-                onClassChange={handleClassChange}
-                selectedDate={selectedDate}
-                onDateSelect={handleDateSelect}
-                allClasses={allClasses}
-              />
-            </CardTitle>
-            {filteredLessons.length > 0 && (
-              <Button 
-                onClick={handleDownloadPDF}
-                disabled={isGeneratingPDF}
-                className="bg-[#039559] hover:bg-[#039559]/90"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                {isGeneratingPDF ? "Generating..." : "Download PDF"}
-              </Button>
-            )}
-          </div>
+          <CardTitle>
+            <WeeklyReportHeader
+              weekStart={weekStart}
+              weekEnd={weekEnd}
+              selectedClass={selectedClass}
+              onClassChange={handleClassChange}
+              selectedDate={selectedDate}
+              onDateSelect={handleDateSelect}
+              allClasses={allClasses}
+            />
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -180,18 +130,16 @@ const WeeklyReport = () => {
           ) : error ? (
             <div className="text-center py-8 text-red-500">Error: {error}</div>
           ) : (
-            <div ref={reportRef}>
-              <WeeklyReportContent
-                weekLessons={filteredLessons}
-                selectedClass={selectedClass}
-                teacherSummary={teacherSummary}
-                classSummary={classSummary}
-                weekStartStr={weekStartStr}
-                weekEndStr={weekEndStr}
-                lessons={lessons}
-                allClasses={allClasses}
-              />
-            </div>
+            <WeeklyReportContent
+              weekLessons={filteredLessons}
+              selectedClass={selectedClass}
+              teacherSummary={teacherSummary}
+              classSummary={classSummary}
+              weekStartStr={weekStartStr}
+              weekEndStr={weekEndStr}
+              lessons={lessons}
+              allClasses={allClasses}
+            />
           )}
         </CardContent>
       </Card>

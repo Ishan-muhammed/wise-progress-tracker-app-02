@@ -1,14 +1,20 @@
 
 import { useParams, useNavigate } from "react-router-dom";
+import { useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 import { useLessonsInDateRange } from "@/hooks/useLessonsInDateRange";
+import { generateTablePDF } from "@/utils/pdfUtils";
+import { useToast } from "@/hooks/use-toast";
 import LessonsTable from "@/components/reports/LessonsTable";
 
 const WeeklyClassSubjectDetail = () => {
   const { class: classParam, subject, teacher, weekStart, weekEnd } = useParams();
   const navigate = useNavigate();
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   const { lessons, loading, error } = useLessonsInDateRange(weekStart!, weekEnd!);
 
@@ -22,6 +28,38 @@ const WeeklyClassSubjectDetail = () => {
 
   const weekStartDate = new Date(weekStart!);
   const weekEndDate = new Date(weekEnd!);
+
+  const handleDownloadPDF = async () => {
+    if (!reportRef.current || filteredLessons.length === 0) {
+      toast({
+        title: "Error",
+        description: "No data to export",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGeneratingPDF(true);
+    try {
+      const filename = `lesson-details-${classParam}-${subject}-${weekStart}-to-${weekEnd}.pdf`;
+      const title = `Lesson Details - Class ${classParam} - ${subject} (${weekStartDate.toLocaleDateString()} - ${weekEndDate.toLocaleDateString()})`;
+      
+      await generateTablePDF(reportRef.current, filename, title);
+      
+      toast({
+        title: "Success",
+        description: "PDF downloaded successfully"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -51,9 +89,21 @@ const WeeklyClassSubjectDetail = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>
-              Lessons for Class {classParam} - {subject}
-            </CardTitle>
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <CardTitle>
+                Lessons for Class {classParam} - {subject}
+              </CardTitle>
+              {filteredLessons.length > 0 && (
+                <Button 
+                  onClick={handleDownloadPDF}
+                  disabled={isGeneratingPDF}
+                  className="bg-[#039559] hover:bg-[#039559]/90"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  {isGeneratingPDF ? "Generating..." : "Download PDF"}
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -61,10 +111,12 @@ const WeeklyClassSubjectDetail = () => {
             ) : error ? (
               <div className="text-center py-8 text-red-500">Error: {error}</div>
             ) : (
-              <LessonsTable 
-                lessons={filteredLessons}
-                emptyText={`No lessons found for Class ${classParam} - ${subject} during this week.`}
-              />
+              <div ref={reportRef}>
+                <LessonsTable 
+                  lessons={filteredLessons}
+                  emptyText={`No lessons found for Class ${classParam} - ${subject} during this week.`}
+                />
+              </div>
             )}
           </CardContent>
         </Card>
