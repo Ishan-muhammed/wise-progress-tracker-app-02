@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,12 +7,12 @@ import LessonStatusSection from "./lesson-form/LessonStatusSection";
 import AssessmentSection from "./lesson-form/AssessmentSection";
 import { useLessonSubmission } from "./lesson-form/useLessonSubmission";
 import { LessonFormData } from "./lesson-form/types";
-
 interface LessonFormProps {
   teacherId: string;
 }
-
-const LessonForm = ({ teacherId }: LessonFormProps) => {
+const LessonForm = ({
+  teacherId
+}: LessonFormProps) => {
   const [formData, setFormData] = useState<LessonFormData>({
     class: "",
     subject: "",
@@ -22,12 +21,12 @@ const LessonForm = ({ teacherId }: LessonFormProps) => {
     completed: false,
     assessment: ""
   });
-  
-  const { submitLesson, loading } = useLessonSubmission(teacherId);
-
+  const {
+    submitLesson,
+    loading
+  } = useLessonSubmission(teacherId);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     const success = await submitLesson(formData);
     if (success) {
       // Reset form
@@ -41,9 +40,7 @@ const LessonForm = ({ teacherId }: LessonFormProps) => {
       });
     }
   };
-
-  return (
-    <Card className="max-w-2xl">
+  return <Card className="max-w-2xl">
       <CardHeader>
         <CardTitle>Submit Lesson Data</CardTitle>
       </CardHeader>
@@ -54,13 +51,11 @@ const LessonForm = ({ teacherId }: LessonFormProps) => {
           <LessonStatusSection formData={formData} setFormData={setFormData} />
           <AssessmentSection formData={formData} setFormData={setFormData} />
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" disabled={loading} className="w-full bg-[#039559]">
             {loading ? "Submitting..." : "Submit Lesson Data"}
           </Button>
         </form>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
-
 export default LessonForm;
