@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -101,9 +102,9 @@ const Header = () => {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-4">
             <img 
-              src="/lovable-uploads/508b2a42-9e0e-4218-93ca-2c5f23a18126.png" 
+              src="/lovable-uploads/672075cf-2f42-43eb-bf6d-cb2cdbf6134e.png" 
               alt="WISE Logo" 
-              className="h-10 w-auto object-contain"
+              className="h-12 w-auto object-contain"
               onError={(e) => {
                 console.error("Logo failed to load");
                 e.currentTarget.style.display = 'none';
