@@ -196,7 +196,7 @@ const ProfileSection = () => {
             <Label className="text-sm font-medium">Select the subjects you teach:</Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {subjects.map(subject => <div key={subject.id} className="flex items-center space-x-2">
-                  <Checkbox id={subject.id} checked={userSubjectIds.includes(subject.id)} onCheckedChange={checked => handleSubjectChange(subject.id, checked as boolean)} className="font-extralight bg-slate-50" />
+                  <Checkbox id={subject.id} checked={userSubjectIds.includes(subject.id)} onCheckedChange={checked => handleSubjectChange(subject.id, checked as boolean)} />
                   <Label htmlFor={subject.id} className="text-sm font-normal">
                     {subject.name}
                   </Label>
