@@ -26,6 +26,7 @@ const Header = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [logoError, setLogoError] = useState<boolean>(false);
 
   // Always show Switch Dashboard if the user has more than 1 role
   const showMenu = roles.length > 1;
@@ -96,20 +97,29 @@ const Header = () => {
     welcomeText = "User";
   }
 
+  console.log("Logo error state:", logoError);
+
   return (
     <header className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-4">
-            <img 
-              src="/lovable-uploads/672075cf-2f42-43eb-bf6d-cb2cdbf6134e.png" 
-              alt="WISE Logo" 
-              className="h-12 w-auto object-contain"
-              onError={(e) => {
-                console.error("Logo failed to load");
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+            {!logoError ? (
+              <img 
+                src="/lovable-uploads/672075cf-2f42-43eb-bf6d-cb2cdbf6134e.png" 
+                alt="WISE Logo" 
+                className="h-12 w-auto object-contain"
+                onLoad={() => console.log("Logo loaded successfully")}
+                onError={(e) => {
+                  console.error("Logo failed to load:", e);
+                  setLogoError(true);
+                }}
+              />
+            ) : (
+              <div className="h-12 w-24 bg-gray-200 flex items-center justify-center text-xs text-gray-500 rounded">
+                WISE
+              </div>
+            )}
           </div>
           <div className="flex items-center space-x-4">
             {/* Show a skeleton while loading, error if failed, otherwise welcome */}
