@@ -1,9 +1,23 @@
 
+import { startOfWeek } from "date-fns";
+
 export const formatDateToString = (date: Date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+};
+
+export const getStartOfWeek = (date: Date): Date => {
+  return startOfWeek(date, { weekStartsOn: 1 }); // Monday as first day
+};
+
+export const formatDateForDisplay = (date: Date): string => {
+  return date.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
 };
 
 export const normalizeDateString = (dateStr: string): string => {

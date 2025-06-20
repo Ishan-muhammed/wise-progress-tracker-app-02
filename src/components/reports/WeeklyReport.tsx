@@ -3,8 +3,8 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, RefreshCw } from "lucide-react";
-import { DatePicker } from "./DatePicker";
-import { WeeklyReportContent } from "./WeeklyReportContent";
+import DatePicker from "./DatePicker";
+import WeeklyReportContent from "./WeeklyReportContent";
 import { useLessonsInDateRange } from "@/hooks/useLessonsInDateRange";
 import { useToast } from "@/hooks/use-toast";
 import { getStartOfWeek, formatDateForDisplay } from "@/utils/dateUtils";
@@ -66,9 +66,8 @@ const WeeklyReport = () => {
         <CardContent>
           <div className="mb-4">
             <DatePicker
-              selected={selectedDate}
-              onSelect={(date) => date && setSelectedDate(date)}
-              placeholder="Select a date to view weekly report"
+              selectedDate={selectedDate}
+              onDateSelect={(date) => date && setSelectedDate(date)}
             />
           </div>
           

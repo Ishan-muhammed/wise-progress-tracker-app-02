@@ -7,8 +7,15 @@ export interface SyllabusLookup {
   [key: string]: number; // key format: "subject-class", value: total_lessons
 }
 
+export interface SyllabusData {
+  subject: string;
+  class: string;
+  total_lessons: number;
+}
+
 export const useSyllabusForReports = () => {
   const [syllabusLookup, setSyllabusLookup] = useState<SyllabusLookup>({});
+  const [syllabusData, setSyllabusData] = useState<SyllabusData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
@@ -16,6 +23,7 @@ export const useSyllabusForReports = () => {
   const fetchSyllabus = async () => {
     if (!user) {
       setSyllabusLookup({});
+      setSyllabusData([]);
       setLoading(false);
       return;
     }
@@ -31,6 +39,7 @@ export const useSyllabusForReports = () => {
       if (syllabusError) {
         setError('Failed to fetch syllabus');
         setSyllabusLookup({});
+        setSyllabusData([]);
         return;
       }
 
@@ -42,10 +51,12 @@ export const useSyllabusForReports = () => {
       });
 
       setSyllabusLookup(lookup);
+      setSyllabusData(data || []);
     } catch (err) {
       console.error('Error fetching syllabus for reports:', err);
       setError('An unexpected error occurred');
       setSyllabusLookup({});
+      setSyllabusData([]);
     } finally {
       setLoading(false);
     }
@@ -62,6 +73,7 @@ export const useSyllabusForReports = () => {
 
   return {
     syllabusLookup,
+    syllabusData,
     loading,
     error,
     getTotalLessons,
