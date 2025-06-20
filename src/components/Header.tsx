@@ -97,8 +97,11 @@ const Header = () => {
     welcomeText = "User";
   }
 
-  // Construct the Supabase Storage URL for the logo
-  const logoUrl = `${supabase.supabaseUrl}/storage/v1/object/public/logos/wise-logo.png`;
+  // Get the public URL for the logo using Supabase Storage method
+  const { data: logoUrlData } = supabase.storage
+    .from('logos')
+    .getPublicUrl('wise-logo.png');
+  const logoUrl = logoUrlData.publicUrl;
   
   console.log("Logo error state:", logoError);
   console.log("Attempting to load logo from:", logoUrl);
