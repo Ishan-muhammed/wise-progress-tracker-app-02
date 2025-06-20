@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useLessonsInDateRange } from "@/hooks/useLessonsInDateRange";
+import { useLessonsInDateRangeCustom } from "@/hooks/useLessonsInDateRangeCustom";
 import { useSyllabusForReports } from "@/hooks/useSyllabusForReports";
 import { generateAcademicYears, getCurrentAcademicYear, getAcademicYearDateRange } from "@/utils/academicYearUtils";
 
@@ -18,7 +18,7 @@ const YearlyReport = () => {
   // Get date range for selected academic year
   const { startDate, endDate } = getAcademicYearDateRange(selectedAcademicYear);
   
-  const { lessons, loading, error } = useLessonsInDateRange(startDate, endDate);
+  const { lessons, loading, error } = useLessonsInDateRangeCustom(startDate, endDate);
   const { syllabusLookup, loading: syllabusLoading, getTotalLessons } = useSyllabusForReports();
   
   console.log("Yearly Report - Academic year:", selectedAcademicYear);

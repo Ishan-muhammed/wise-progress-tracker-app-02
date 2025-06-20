@@ -57,14 +57,10 @@ export const useLessonsInDateRange = (selectedDate: Date, rangeType: DateRangeTy
 
       console.log(`Fetching lessons for ${rangeType} range: ${startStr} to ${endStr}`);
 
+      // Fix the Supabase query - remove the profiles join that's causing issues
       const { data: lessonsData, error: lessonsError } = await supabase
         .from('lessons')
-        .select(`
-          *,
-          profiles!lessons_user_id_fkey (
-            name
-          )
-        `)
+        .select('*')
         .gte('date', startStr)
         .lte('date', endStr)
         .order('date', { ascending: false });
@@ -76,7 +72,14 @@ export const useLessonsInDateRange = (selectedDate: Date, rangeType: DateRangeTy
       }
 
       console.log(`Found ${lessonsData?.length || 0} lessons in ${rangeType} range`);
-      setLessons(lessonsData || []);
+      
+      // Transform the data to match the Lesson interface
+      const transformedLessons: Lesson[] = (lessonsData || []).map(lesson => ({
+        ...lesson,
+        profiles: undefined // Remove the problematic profiles field for now
+      }));
+      
+      setLessons(transformedLessons);
 
     } catch (err) {
       console.error('Unexpected error fetching lessons:', err);

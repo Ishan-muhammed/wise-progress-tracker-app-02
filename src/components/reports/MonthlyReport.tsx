@@ -31,15 +31,19 @@ const MonthlyReport = () => {
     startDate,
     endDate
   } = getMonthDateRange(selectedMonth, selectedAcademicYear);
+  
+  // Use the fixed hook with Date objects
   const {
     lessons,
     loading,
     error
-  } = useLessonsInDateRange(startDate, endDate);
+  } = useLessonsInDateRange(startDate, 'month');
+  
   const {
     getTotalLessons,
     loading: syllabusLoading
   } = useSyllabusForReports();
+  
   console.log("Monthly Report - Academic year:", selectedAcademicYear);
   console.log("Monthly Report - Month:", selectedMonth);
   console.log("Monthly Report - Date range:", startDate, "to", endDate);
