@@ -1,10 +1,14 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 import { useLessonsInDateRange } from "@/hooks/useLessonsInDateRange";
 import { useSyllabusForReports } from "@/hooks/useSyllabusForReports";
 import { generateAcademicYears, getCurrentAcademicYear, getMonthsInAcademicYear, getMonthDateRange } from "@/utils/academicYearUtils";
+import { generateTablePDF } from "@/utils/pdfUtils";
+import { useToast } from "@/hooks/use-toast";
 
 // List of classes 8-12 only
 const ALL_CLASSES = ['8', '9', '10', '11', '12'];
@@ -12,10 +16,14 @@ const ALL_CLASSES = ['8', '9', '10', '11', '12'];
 // Generate academic years starting from 2025/26
 const academicYears = generateAcademicYears(2025, 5);
 const academicMonths = getMonthsInAcademicYear();
+
 const MonthlyReport = () => {
   const [selectedClass, setSelectedClass] = useState<string | "all">("all");
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
   const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>(getCurrentAcademicYear());
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const tableRef = useRef<HTMLTableElement>(null);
+  const { toast } = useToast();
 
   // Calculate date range for selected month in academic year
   const {
@@ -59,33 +67,84 @@ const MonthlyReport = () => {
     if (lesson.completed) summary[key].completed++;
   });
 
+  const handleDownloadPDF = async () => {
+    if (!tableRef.current) {
+      toast({
+        title: "Error",
+        description: "No data to export",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGeneratingPDF(true);
+    try {
+      const currentMonthLabel = academicMonths.find(m => m.value === selectedMonth)?.label || 'Unknown';
+      const filename = `monthly-report-${currentMonthLabel}-${selectedAcademicYear}.pdf`;
+      const title = `Monthly Report - ${currentMonthLabel} (${selectedAcademicYear})`;
+      
+      await generateTablePDF(tableRef.current, filename, title);
+      
+      toast({
+        title: "Success",
+        description: "PDF downloaded successfully"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   // Get current month label
   const currentMonthLabel = academicMonths.find(m => m.value === selectedMonth)?.label || 'Unknown';
   const isLoading = loading || syllabusLoading;
+
   if (isLoading) {
-    return <Card>
+    return (
+      <Card>
         <CardHeader>
           <CardTitle>Monthly Report - {currentMonthLabel} ({selectedAcademicYear})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">Loading lessons...</div>
         </CardContent>
-      </Card>;
+      </Card>
+    );
   }
+
   if (error) {
-    return <Card>
+    return (
+      <Card>
         <CardHeader>
-          <CardTitle>Monthly Report - {currentMonthLabel} ({selectedAcademicYear})</CardTitle>
+          <CardTitle>Monthly Report - {currentMonthLabel} ({selectedAcademicYear})</CardHeader>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-red-500">Error: {error}</div>
         </CardContent>
-      </Card>;
+      </Card>
+    );
   }
-  return <Card>
+
+  return (
+    <Card>
       <CardHeader>
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <CardTitle>Monthly Report - {currentMonthLabel} ({selectedAcademicYear})</CardTitle>
+          {Object.keys(summary).length > 0 && (
+            <Button 
+              onClick={handleDownloadPDF}
+              disabled={isGeneratingPDF}
+              className="bg-[#039559] hover:bg-[#039559]/90"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {isGeneratingPDF ? "Generating..." : "Download PDF"}
+            </Button>
+          )}
         </div>
         <div className="mt-4 flex flex-col md:flex-row gap-4 md:items-center">
           <div className="flex flex-col md:flex-row gap-2 md:items-center">
@@ -139,9 +198,15 @@ const MonthlyReport = () => {
         </div>
       </CardHeader>
       <CardContent>
-        {Object.keys(summary).length === 0 ? <p className="text-center text-muted-foreground py-8">
-            {selectedClass === "all" ? `No lessons recorded for ${currentMonthLabel} in academic year ${selectedAcademicYear}.` : `No lessons recorded for Class ${selectedClass} in ${currentMonthLabel} (${selectedAcademicYear}).`}
-          </p> : <Table>
+        {Object.keys(summary).length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">
+            {selectedClass === "all" 
+              ? `No lessons recorded for ${currentMonthLabel} in academic year ${selectedAcademicYear}.`
+              : `No lessons recorded for Class ${selectedClass} in ${currentMonthLabel} (${selectedAcademicYear}).`
+            }
+          </p>
+        ) : (
+          <Table ref={tableRef}>
             <TableHeader>
               <TableRow>
                 <TableHead>Class</TableHead>
@@ -152,16 +217,21 @@ const MonthlyReport = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Object.values(summary).map((item: any, index) => <TableRow key={index}>
+              {Object.values(summary).map((item: any, index) => (
+                <TableRow key={index}>
                   <TableCell>Class {item.class}</TableCell>
                   <TableCell>{item.subject}</TableCell>
                   <TableCell>{item.total}</TableCell>
                   <TableCell>{item.completed}</TableCell>
                   <TableCell>{item.totalLessonsInSyllabus}</TableCell>
-                </TableRow>)}
+                </TableRow>
+              ))}
             </TableBody>
-          </Table>}
+          </Table>
+        )}
       </CardContent>
-    </Card>;
+    </Card>
+  );
 };
+
 export default MonthlyReport;

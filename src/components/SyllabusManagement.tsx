@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,11 +18,18 @@ const SyllabusManagement = () => {
   const { toast } = useToast();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<SyllabusItem | null>(null);
+  const [selectedClass, setSelectedClass] = useState<string>("all");
   const [formData, setFormData] = useState({
     subject: "",
     class: "",
     total_lessons: ""
   });
+
+  // Filter syllabus by selected class
+  const filteredSyllabus = useMemo(() => {
+    if (selectedClass === "all") return syllabus;
+    return syllabus.filter(item => item.class === selectedClass);
+  }, [syllabus, selectedClass]);
 
   const resetForm = () => {
     setFormData({ subject: "", class: "", total_lessons: "" });
@@ -150,94 +156,117 @@ const SyllabusManagement = () => {
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle>Syllabus Management</CardTitle>
-          <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
-            setIsAddDialogOpen(open);
-            if (!open) resetForm();
-          }}>
-            <DialogTrigger asChild>
-              <Button className="bg-[#039559] hover:bg-[#039559]/90">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Syllabus Item
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  {editingItem ? 'Edit' : 'Add'} Syllabus Item
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="subject">Subject</Label>
-                  <Select
-                    value={formData.subject}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, subject: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select subject" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {subjects.map(subject => (
-                        <SelectItem key={subject} value={subject}>
-                          {subject}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="class">Class</Label>
-                  <Select
-                    value={formData.class}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, class: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select class" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {classes.map(cls => (
-                        <SelectItem key={cls} value={cls}>
-                          Class {cls}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="total_lessons">Total Lessons</Label>
-                  <Input
-                    id="total_lessons"
-                    type="number"
-                    min="0"
-                    value={formData.total_lessons}
-                    onChange={(e) => setFormData(prev => ({ ...prev, total_lessons: e.target.value }))}
-                    placeholder="Enter total lessons"
-                  />
-                </div>
-                <div className="flex gap-2 pt-4">
-                  <Button type="submit" className="bg-[#039559] hover:bg-[#039559]/90">
-                    {editingItem ? 'Update' : 'Add'}
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => {
-                      resetForm();
-                      setIsAddDialogOpen(false);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <div className="flex gap-4 items-center">
+            <div className="flex flex-col md:flex-row gap-2 md:items-center">
+              <span className="text-muted-foreground text-sm px-[12px]">Filter by Class:</span>
+              <Select value={selectedClass} onValueChange={setSelectedClass}>
+                <SelectTrigger className="max-w-xs">
+                  <SelectValue>
+                    {selectedClass === "all" ? "All Classes" : `Class ${selectedClass}`}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Classes</SelectItem>
+                  {classes.map(classVal => (
+                    <SelectItem key={classVal} value={classVal}>
+                      Class {classVal}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+              setIsAddDialogOpen(open);
+              if (!open) resetForm();
+            }}>
+              <DialogTrigger asChild>
+                <Button className="bg-[#039559] hover:bg-[#039559]/90">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Syllabus Item
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingItem ? 'Edit' : 'Add'} Syllabus Item
+                  </DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="subject">Subject</Label>
+                    <Select
+                      value={formData.subject}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, subject: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select subject" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {subjects.map(subject => (
+                          <SelectItem key={subject} value={subject}>
+                            {subject}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="class">Class</Label>
+                    <Select
+                      value={formData.class}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, class: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select class" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {classes.map(cls => (
+                          <SelectItem key={cls} value={cls}>
+                            Class {cls}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="total_lessons">Total Lessons</Label>
+                    <Input
+                      id="total_lessons"
+                      type="number"
+                      min="0"
+                      value={formData.total_lessons}
+                      onChange={(e) => setFormData(prev => ({ ...prev, total_lessons: e.target.value }))}
+                      placeholder="Enter total lessons"
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-4">
+                    <Button type="submit" className="bg-[#039559] hover:bg-[#039559]/90">
+                      {editingItem ? 'Update' : 'Add'}
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={() => {
+                        resetForm();
+                        setIsAddDialogOpen(false);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
-        {syllabus.length === 0 ? (
+        {filteredSyllabus.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
-            No syllabus items found. Click "Add Syllabus Item" to get started.
+            {selectedClass === "all" 
+              ? "No syllabus items found. Click \"Add Syyllabus Item\" to get started."
+              : `No syllabus items found for Class ${selectedClass}.`
+            }
           </p>
         ) : (
           <Table>
@@ -250,7 +279,7 @@ const SyllabusManagement = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {syllabus.map((item) => (
+              {filteredSyllabus.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell>{item.subject}</TableCell>
                   <TableCell>Class {item.class}</TableCell>
