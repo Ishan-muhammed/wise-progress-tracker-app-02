@@ -98,6 +98,7 @@ const Header = () => {
   }
 
   console.log("Logo error state:", logoError);
+  console.log("Attempting to load logo from:", "/lovable-uploads/672075cf-2f42-43eb-bf6d-cb2cdbf6134e.png");
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -106,7 +107,7 @@ const Header = () => {
           <div className="flex items-center space-x-4">
             {!logoError ? (
               <img 
-                src="/lovable-uploads/672075cf-2f42-43eb-bf6d-cb2cdbf6134e.png" 
+                src="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=400&h=200&fit=crop&crop=center"
                 alt="WISE Logo" 
                 className="h-12 w-auto object-contain"
                 onLoad={() => console.log("Logo loaded successfully")}
@@ -116,7 +117,7 @@ const Header = () => {
                 }}
               />
             ) : (
-              <div className="h-12 w-24 bg-gray-200 flex items-center justify-center text-xs text-gray-500 rounded">
+              <div className="h-12 w-24 bg-blue-600 text-white flex items-center justify-center text-sm font-semibold rounded">
                 WISE
               </div>
             )}
