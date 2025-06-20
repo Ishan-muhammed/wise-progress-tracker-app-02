@@ -1,8 +1,8 @@
+
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import LessonForm from "@/components/LessonForm";
 import ProfileSection from "@/components/ProfileSection";
-import LogoutButton from "@/components/LogoutButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const TeacherDashboard = () => {
@@ -66,9 +66,6 @@ const TeacherDashboard = () => {
             <div className="mb-4">
               <h1 className="text-3xl font-bold text-gray-900">Teacher Dashboard</h1>
               <p className="text-gray-600">Manage your lessons and profile</p>
-            </div>
-            <div className="flex justify-end">
-              <LogoutButton />
             </div>
           </div>
           
