@@ -15,7 +15,8 @@ export const generateTablePDF = async (
       backgroundColor: '#ffffff'
     });
     
-    const imgData = canvas.getImageData();
+    // Fix: Use canvas.toDataURL() directly, not getImageData()
+    const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF('p', 'mm', 'a4');
     
     // Add title
@@ -30,14 +31,14 @@ export const generateTablePDF = async (
     let position = 40;
 
     // Add image to PDF
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 20, position, imgWidth, imgHeight);
+    pdf.addImage(imgData, 'PNG', 20, position, imgWidth, imgHeight);
     heightLeft -= pageHeight - position - 20;
 
     // Add new pages if needed
     while (heightLeft >= 0) {
       position = heightLeft - imgHeight + 20;
       pdf.addPage();
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 20, position, imgWidth, imgHeight);
+      pdf.addImage(imgData, 'PNG', 20, position, imgWidth, imgHeight);
       heightLeft -= pageHeight - 20;
     }
 
