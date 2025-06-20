@@ -1,7 +1,6 @@
 
 export interface TeacherSummary {
-  teacherId: string;
-  teacherName: string;
-  totalLessons: number;
-  completedLessons: number;
+  teacher: string;
+  completed: number;
+  total: number;
 }

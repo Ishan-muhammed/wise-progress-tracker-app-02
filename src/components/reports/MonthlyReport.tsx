@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-import { useLessonsInDateRange } from "@/hooks/useLessonsInDateRange";
+import { useLessonsInDateRangeCustom } from "@/hooks/useLessonsInDateRangeCustom";
 import { useSyllabusForReports } from "@/hooks/useSyllabusForReports";
 import { generateAcademicYears, getCurrentAcademicYear, getMonthsInAcademicYear, getMonthDateRange } from "@/utils/academicYearUtils";
 import { generateTablePDF } from "@/utils/pdfUtils";
@@ -32,12 +32,12 @@ const MonthlyReport = () => {
     endDate
   } = getMonthDateRange(selectedMonth, selectedAcademicYear);
   
-  // Use the fixed hook with Date objects
+  // Use the custom hook with Date objects
   const {
     lessons,
     loading,
     error
-  } = useLessonsInDateRange(startDate, 'month');
+  } = useLessonsInDateRangeCustom(startDate, endDate);
   
   const {
     getTotalLessons,
