@@ -4,9 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { AuthForm } from "@/components/auth/AuthForm";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [logoError, setLogoError] = useState<boolean>(false);
   const navigate = useNavigate();
   const { user, loading, roles, isExplicitLogin, session } = useAuth();
 
@@ -37,6 +39,10 @@ const Auth = () => {
       </div>
     );
   }
+
+  // Get the public URL for the logo using the correct filename
+  const { data: logoUrlData } = supabase.storage.from('logos').getPublicUrl('WISE Logo.png');
+  const logoUrl = logoUrlData.publicUrl;
 
   return (
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
@@ -86,7 +92,22 @@ const Auth = () => {
       <Card className="w-full max-w-md relative z-10 shadow-2xl shadow-black/10 bg-white/95 backdrop-blur-sm">
         <CardHeader className="text-center">
           <div className="mb-4">
-            <h1 className="text-4xl font-bold text-green-700 mb-2">WISE</h1>
+            {!logoError ? (
+              <img 
+                src={logoUrl} 
+                alt="WISE Logo" 
+                className="h-12 w-auto object-contain mx-auto mb-2" 
+                onLoad={() => console.log("Logo loaded successfully")}
+                onError={(e) => {
+                  console.error("Logo failed to load:", e);
+                  setLogoError(true);
+                }}
+              />
+            ) : (
+              <div className="h-12 w-24 bg-green-700 text-white flex items-center justify-center text-lg font-bold rounded mx-auto mb-2">
+                WISE
+              </div>
+            )}
             <p className="text-lg text-muted-foreground">Islamic Studies Progress Tracking</p>
           </div>
           <CardTitle>{isLogin ? "Welcome Back" : "Create Account"}</CardTitle>
