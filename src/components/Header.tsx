@@ -97,10 +97,10 @@ const Header = () => {
     welcomeText = "User";
   }
 
-  // Get the public URL for the logo using Supabase Storage method
+  // Get the public URL for the logo using the correct filename
   const { data: logoUrlData } = supabase.storage
     .from('logos')
-    .getPublicUrl('wise-logo.png');
+    .getPublicUrl('WISE Logo.png');
   const logoUrl = logoUrlData.publicUrl;
   
   console.log("Logo error state:", logoError);
