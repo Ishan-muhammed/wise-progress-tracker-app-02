@@ -1,8 +1,9 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+
+export type UserRole = 'teacher' | 'admin';
 
 interface AuthContextType {
   user: User | null;
@@ -207,7 +208,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     roles,
     isAdmin,
     isExplicitLogin,
-    setExplicitLogin,
+    setExplicitLogin: setIsExplicitLogin,
     logout,
   };
 

@@ -12,7 +12,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
-  const { user, loading, roles, error, retry, session } = useAuth();
+  const { user, loading, roles, error, session } = useAuth();
   const navigate = useNavigate();
   const [gracePeriod, setGracePeriod] = useState(true);
 
@@ -73,7 +73,7 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
     }
   }, [user, session, loading, navigate, requiredRoles, roles, error, gracePeriod]);
 
-  // Show error state with retry option
+  // Show error state with simpler options
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -81,9 +81,6 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
           <div className="text-lg mb-4 text-red-600">Connection Error</div>
           <div className="text-sm text-gray-600 mb-6">{error}</div>
           <div className="space-y-2">
-            <Button onClick={retry} className="bg-blue-500 hover:bg-blue-600">
-              Try Again
-            </Button>
             <Button 
               onClick={() => window.location.reload()} 
               variant="outline"
