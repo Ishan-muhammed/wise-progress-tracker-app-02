@@ -297,6 +297,7 @@ const SyllabusManagement = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => handleDelete(item.id)}
+                        className="hover:bg-red-50 hover:border-red-300 hover:text-red-600"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
