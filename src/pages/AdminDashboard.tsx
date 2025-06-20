@@ -1,10 +1,10 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import ReportButtons from "@/components/ReportButtons";
 import ProfileSection from "@/components/ProfileSection";
 import TeacherManagement from "@/components/TeacherManagement";
 import LogoutButton from "@/components/LogoutButton";
+import SyllabusManagement from "@/components/SyllabusManagement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const AdminDashboard = () => {
@@ -43,7 +43,7 @@ const AdminDashboard = () => {
         </div>
         
         <Tabs defaultValue="reports" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 max-w-lg mx-auto mb-6">
+          <TabsList className="grid w-full grid-cols-4 max-w-2xl mx-auto mb-6">
             <TabsTrigger 
               value="reports"
               className="data-[state=active]:bg-[#039559] data-[state=active]:text-white"
@@ -55,6 +55,12 @@ const AdminDashboard = () => {
               className="data-[state=active]:bg-[#039559] data-[state=active]:text-white"
             >
               Teachers
+            </TabsTrigger>
+            <TabsTrigger 
+              value="syllabus"
+              className="data-[state=active]:bg-[#039559] data-[state=active]:text-white"
+            >
+              Syllabus
             </TabsTrigger>
             <TabsTrigger 
               value="profile"
@@ -70,6 +76,10 @@ const AdminDashboard = () => {
           
           <TabsContent value="teachers">
             <TeacherManagement />
+          </TabsContent>
+          
+          <TabsContent value="syllabus">
+            <SyllabusManagement />
           </TabsContent>
           
           <TabsContent value="profile" className="max-w-4xl mx-auto">

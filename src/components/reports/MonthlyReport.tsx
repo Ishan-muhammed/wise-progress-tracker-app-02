@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLessonsInDateRange } from "@/hooks/useLessonsInDateRange";
+import { useSyllabusForReports } from "@/hooks/useSyllabusForReports";
 import { 
   generateAcademicYears, 
   getCurrentAcademicYear, 
@@ -27,6 +28,7 @@ const MonthlyReport = () => {
   const { startDate, endDate } = getMonthDateRange(selectedMonth, selectedAcademicYear);
   
   const { lessons, loading, error } = useLessonsInDateRange(startDate, endDate);
+  const { getTotalLessons, loading: syllabusLoading } = useSyllabusForReports();
 
   console.log("Monthly Report - Academic year:", selectedAcademicYear);
   console.log("Monthly Report - Month:", selectedMonth);
@@ -48,7 +50,8 @@ const MonthlyReport = () => {
         class: lesson.class,
         subject: lesson.subject,
         completed: 0,
-        total: 0
+        total: 0,
+        totalLessonsInSyllabus: getTotalLessons(lesson.subject, lesson.class)
       };
     }
     summary[key].total++;
@@ -58,7 +61,9 @@ const MonthlyReport = () => {
   // Get current month label
   const currentMonthLabel = academicMonths.find(m => m.value === selectedMonth)?.label || 'Unknown';
 
-  if (loading) {
+  const isLoading = loading || syllabusLoading;
+
+  if (isLoading) {
     return (
       <Card>
         <CardHeader>
@@ -170,8 +175,9 @@ const MonthlyReport = () => {
               <TableRow>
                 <TableHead>Class</TableHead>
                 <TableHead>Subject</TableHead>
-                <TableHead>Total Lessons</TableHead>
+                <TableHead>Monthly Lessons</TableHead>
                 <TableHead>Completed</TableHead>
+                <TableHead>Total Lessons (Syllabus)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -181,6 +187,7 @@ const MonthlyReport = () => {
                   <TableCell>{item.subject}</TableCell>
                   <TableCell>{item.total}</TableCell>
                   <TableCell>{item.completed}</TableCell>
+                  <TableCell>{item.totalLessonsInSyllabus}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

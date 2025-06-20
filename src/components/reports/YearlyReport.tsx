@@ -5,16 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLessonsInDateRange } from "@/hooks/useLessonsInDateRange";
+import { useSyllabusForReports } from "@/hooks/useSyllabusForReports";
 import { generateAcademicYears, getCurrentAcademicYear, getAcademicYearDateRange } from "@/utils/academicYearUtils";
-
-const subjects = [
-  { name: "Aqeedah", totalLessons: 20 },
-  { name: "Quran", totalLessons: 20 },
-  { name: "Hadith", totalLessons: 20 },
-  { name: "Tajweed", totalLessons: 20 },
-  { name: "Fiqh", totalLessons: 20 },
-  { name: "Arabic", totalLessons: 20 }
-];
 
 const classes = ["8", "9", "10", "11", "12"];
 const academicYears = generateAcademicYears(2025, 5);
@@ -27,10 +19,12 @@ const YearlyReport = () => {
   const { startDate, endDate } = getAcademicYearDateRange(selectedAcademicYear);
   
   const { lessons, loading, error } = useLessonsInDateRange(startDate, endDate);
+  const { syllabusLookup, loading: syllabusLoading, getTotalLessons } = useSyllabusForReports();
   
   console.log("Yearly Report - Academic year:", selectedAcademicYear);
   console.log("Yearly Report - Date range:", startDate, "to", endDate);
   console.log("Yearly Report - All lessons:", lessons.length);
+  console.log("Yearly Report - Syllabus lookup:", syllabusLookup);
 
   // Filter lessons by selected class
   const filteredLessons = selectedClass === "all" 
@@ -39,25 +33,30 @@ const YearlyReport = () => {
 
   console.log("Yearly Report - Filtered completed lessons:", filteredLessons.length);
 
-  // Calculate summary for each class and subject
+  // Calculate summary for each class and subject using syllabus data
   const summary: any = [];
   
   const classesToProcess = selectedClass === "all" ? classes : [selectedClass];
   
   classesToProcess.forEach(cls => {
-    subjects.forEach(subject => {
+    // Get unique subjects for this class from syllabus
+    const subjectsForClass = Object.keys(syllabusLookup)
+      .filter(key => key.endsWith(`-${cls}`))
+      .map(key => key.split('-')[0]);
+    
+    subjectsForClass.forEach(subject => {
       const classSubjectLessons = filteredLessons.filter((lesson: any) => 
-        lesson.class === cls && lesson.subject === subject.name
+        lesson.class === cls && lesson.subject === subject
       );
       
       const completed = classSubjectLessons.length;
-      const total = subject.totalLessons;
-      const pending = total - completed;
+      const total = getTotalLessons(subject, cls);
+      const pending = Math.max(0, total - completed);
       const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
       
       summary.push({
         class: cls,
-        subject: subject.name,
+        subject: subject,
         completed,
         pending,
         total,
@@ -66,7 +65,9 @@ const YearlyReport = () => {
     });
   });
 
-  if (loading) {
+  const isLoading = loading || syllabusLoading;
+
+  if (isLoading) {
     return (
       <Card>
         <CardHeader>
