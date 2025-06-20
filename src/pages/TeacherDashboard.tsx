@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import LessonForm from "@/components/LessonForm";
@@ -64,11 +63,11 @@ const TeacherDashboard = () => {
         <Header />
         <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           <div className="mb-6 text-center">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Teacher Dashboard</h1>
-                <p className="text-gray-600">Manage your lessons an profile</p>
-              </div>
+            <div className="mb-4">
+              <h1 className="text-3xl font-bold text-gray-900">Teacher Dashboard</h1>
+              <p className="text-gray-600">Manage your lessons and profile</p>
+            </div>
+            <div className="flex justify-end">
               <LogoutButton />
             </div>
           </div>
