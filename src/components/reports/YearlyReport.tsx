@@ -1,9 +1,10 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useLessonsInDateRangeCustom } from "@/hooks/useLessonsInDateRangeCustom";
+import { useLessonsInDateRange } from "@/hooks/useLessonsInDateRange";
 import { useSyllabusForReports } from "@/hooks/useSyllabusForReports";
 import { generateAcademicYears, getCurrentAcademicYear, getAcademicYearDateRange } from "@/utils/academicYearUtils";
 
@@ -15,13 +16,9 @@ const YearlyReport = () => {
   const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>(getCurrentAcademicYear());
   
   // Get date range for selected academic year
-  const { startDate: startDateStr, endDate: endDateStr } = getAcademicYearDateRange(selectedAcademicYear);
+  const { startDate, endDate } = getAcademicYearDateRange(selectedAcademicYear);
   
-  // Convert strings to Date objects
-  const startDate = new Date(startDateStr);
-  const endDate = new Date(endDateStr);
-  
-  const { lessons, loading, error } = useLessonsInDateRangeCustom(startDate, endDate);
+  const { lessons, loading, error } = useLessonsInDateRange(startDate, endDate);
   const { syllabusLookup, loading: syllabusLoading, getTotalLessons } = useSyllabusForReports();
   
   console.log("Yearly Report - Academic year:", selectedAcademicYear);

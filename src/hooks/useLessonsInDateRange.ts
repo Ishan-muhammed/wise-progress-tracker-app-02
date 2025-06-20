@@ -1,102 +1,115 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Lesson } from '@/types/lesson';
-import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, format } from 'date-fns';
+import { mergeProfiles, fetchLessonProfiles } from '@/utils/lessonUtils';
 
-type DateRangeType = 'week' | 'month' | 'year';
-
-export const useLessonsInDateRange = (selectedDate: Date, rangeType: DateRangeType) => {
+export const useLessonsInDateRange = (startDate: string, endDate: string) => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
-  const { user } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  const { user, isAdmin } = useAuth();
+  
+  // Use refs to track current values without causing re-renders
+  const currentStartDate = useRef(startDate);
+  const currentEndDate = useRef(endDate);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const isUnmountedRef = useRef(false);
 
-  const getDateRange = useCallback((date: Date, type: DateRangeType) => {
-    const options = { weekStartsOn: 1 as const }; // Monday as first day
-    
-    switch (type) {
-      case 'week':
-        return {
-          start: startOfWeek(date, options),
-          end: endOfWeek(date, options)
-        };
-      case 'month':
-        return {
-          start: startOfMonth(date),
-          end: endOfMonth(date)
-        };
-      case 'year':
-        return {
-          start: startOfYear(date),
-          end: endOfYear(date)
-        };
-      default:
-        return {
-          start: startOfWeek(date, options),
-          end: endOfWeek(date, options)
-        };
-    }
+  // Update refs when dates change
+  useEffect(() => {
+    currentStartDate.current = startDate;
+    currentEndDate.current = endDate;
+  }, [startDate, endDate]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isUnmountedRef.current = true;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, []);
 
   const fetchLessons = useCallback(async () => {
-    if (!user) {
+    // Don't fetch if component is unmounted or required data is missing
+    if (isUnmountedRef.current || !user || !currentStartDate.current || !currentEndDate.current) {
       setLessons([]);
       setLoading(false);
       return;
     }
 
+    // Abort previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new abort controller
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
     try {
       setLoading(true);
-      setError('');
+      setError(null);
 
-      const { start, end } = getDateRange(selectedDate, rangeType);
-      const startStr = format(start, 'yyyy-MM-dd');
-      const endStr = format(end, 'yyyy-MM-dd');
-
-      console.log(`Fetching lessons for ${rangeType} range: ${startStr} to ${endStr}`);
-
-      // Fix the Supabase query - remove the profiles join that's causing issues
       const { data: lessonsData, error: lessonsError } = await supabase
         .from('lessons')
         .select('*')
-        .gte('date', startStr)
-        .lte('date', endStr)
+        .gte('date', currentStartDate.current)
+        .lte('date', currentEndDate.current)
         .order('date', { ascending: false });
 
+      if (signal.aborted || isUnmountedRef.current) return;
+
       if (lessonsError) {
-        console.error('Error fetching lessons:', lessonsError);
         setError('Failed to fetch lessons');
+        setLessons([]);
         return;
       }
 
-      console.log(`Found ${lessonsData?.length || 0} lessons in ${rangeType} range`);
+      if (!lessonsData || lessonsData.length === 0) {
+        setLessons([]);
+        return;
+      }
+
+      // Get unique user_ids and ensure they're strings
+      const userIds = [...new Set(lessonsData.map((lesson: Lesson) => String(lesson.user_id)))];
       
-      // Transform the data to match the Lesson interface
-      const transformedLessons: Lesson[] = (lessonsData || []).map(lesson => ({
-        ...lesson,
-        profiles: undefined // Remove the problematic profiles field for now
-      }));
+      // Fetch profiles for all lesson user_ids
+      const profileMap = await fetchLessonProfiles(userIds, signal);
+
+      if (signal.aborted || isUnmountedRef.current || !profileMap) return;
+
+      const merged = mergeProfiles(lessonsData as Lesson[], profileMap);
       
-      setLessons(transformedLessons);
+      if (!isUnmountedRef.current) {
+        setLessons(merged);
+      }
 
     } catch (err) {
-      console.error('Unexpected error fetching lessons:', err);
-      setError('An unexpected error occurred');
+      if (!(err instanceof DOMException && err.name === "AbortError") && !isUnmountedRef.current) {
+        console.error('Unexpected error fetching lessons:', err);
+        setError('An unexpected error occurred');
+        setLessons([]);
+      }
     } finally {
+      if (!isUnmountedRef.current) {
+        setLoading(false);
+      }
+    }
+  }, [user?.id, isAdmin]); // Removed date dependencies to prevent infinite loops
+
+  // Effect to trigger fetch when dependencies change
+  useEffect(() => {
+    if (user && startDate && endDate) {
+      fetchLessons();
+    } else {
+      setLessons([]);
       setLoading(false);
     }
-  }, [user, selectedDate, rangeType, getDateRange]);
+  }, [fetchLessons, startDate, endDate]); // dates here are safe since fetchLessons doesn't depend on them
 
-  useEffect(() => {
-    fetchLessons();
-  }, [fetchLessons]);
-
-  return { 
-    lessons, 
-    loading, 
-    error,
-    refetch: fetchLessons
-  };
+  return { lessons, loading, error };
 };

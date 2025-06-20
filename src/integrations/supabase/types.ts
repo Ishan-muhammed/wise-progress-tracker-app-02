@@ -126,35 +126,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_classes: {
-        Row: {
-          class: string
-          created_at: string
-          id: string
-          user_id: string
-        }
-        Insert: {
-          class: string
-          created_at?: string
-          id?: string
-          user_id: string
-        }
-        Update: {
-          class?: string
-          created_at?: string
-          id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_classes_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_roles: {
         Row: {
           created_at: string

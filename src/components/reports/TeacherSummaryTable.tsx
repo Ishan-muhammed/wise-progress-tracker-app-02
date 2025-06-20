@@ -14,16 +14,16 @@ const TeacherSummaryTable = ({ teacherSummary }: TeacherSummaryTableProps) => {
         <TableHeader>
           <TableRow>
             <TableHead>Teacher</TableHead>
-            <TableHead>Total Lessons</TableHead>
-            <TableHead>Completed Lessons</TableHead>
+            <TableHead>Classes Taught</TableHead>
+            <TableHead>Total Completed Lessons</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {teacherSummary.map((summary, index) => (
             <TableRow key={index}>
-              <TableCell>{summary.teacher}</TableCell>
-              <TableCell>{summary.total}</TableCell>
-              <TableCell>{summary.completed}</TableCell>
+              <TableCell>{summary.teacherName}</TableCell>
+              <TableCell>{summary.totalLessons}</TableCell>
+              <TableCell>{summary.completedLessons}</TableCell>
             </TableRow>
           ))}
         </TableBody>

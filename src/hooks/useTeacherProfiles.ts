@@ -8,7 +8,6 @@ interface TeacherProfile {
   email: string;
   gender: string | null;
   age: number | null;
-  classes: string[];
 }
 
 export const useTeacherProfiles = () => {
@@ -69,8 +68,8 @@ export const useTeacherProfiles = () => {
       const teacherIds = teacherRoles.map(role => role.user_id);
       console.log('Found teacher IDs:', teacherIds);
 
-      // Get the profiles for these teachers
-      const { data: profilesData, error: profilesError } = await supabase
+      // Now get the profiles for these teachers
+      const { data, error } = await supabase
         .from('profiles')
         .select(`
           id, 
@@ -83,45 +82,22 @@ export const useTeacherProfiles = () => {
 
       if (signal.aborted || isUnmountedRef.current) return;
 
-      if (profilesError) {
-        console.error('Error fetching teacher profiles:', profilesError);
-        setError(`Failed to fetch teacher profiles: ${profilesError.message}`);
-        return;
-      }
-
-      // Get user classes for all teachers
-      const { data: classesData, error: classesError } = await supabase
-        .from('user_classes')
-        .select('user_id, class')
-        .in('user_id', teacherIds);
-
-      if (signal.aborted || isUnmountedRef.current) return;
-
-      if (classesError) {
-        console.error('Error fetching teacher classes:', classesError);
-        setError(`Failed to fetch teacher classes: ${classesError.message}`);
-        return;
-      }
-
-      // Combine profiles with their classes
-      const teacherProfiles = profilesData?.map((profile: any) => {
-        const userClasses = classesData?.filter(c => c.user_id === profile.id) || [];
-        const classes = userClasses.map(c => c.class).sort((a, b) => parseInt(a) - parseInt(b));
-        
-        return {
+      if (error) {
+        console.error('Error fetching teacher profiles:', error);
+        setError(`Failed to fetch teacher profiles: ${error.message}`);
+      } else {
+        console.log('Teacher profiles fetched successfully:', data);
+        const teacherProfiles = data?.map((profile: any) => ({
           id: profile.id,
           name: profile.name,
           email: profile.email,
           gender: profile.gender,
-          age: profile.age,
-          classes
-        };
-      }) || [];
-      
-      console.log('Teacher profiles fetched successfully:', teacherProfiles);
-      
-      if (!isUnmountedRef.current) {
-        setProfiles(teacherProfiles);
+          age: profile.age
+        })) || [];
+        
+        if (!isUnmountedRef.current) {
+          setProfiles(teacherProfiles);
+        }
       }
     } catch (error) {
       if (!(error instanceof DOMException && error.name === "AbortError") && !isUnmountedRef.current) {

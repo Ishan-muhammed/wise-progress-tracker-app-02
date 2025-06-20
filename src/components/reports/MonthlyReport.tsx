@@ -1,10 +1,11 @@
+
 import { useState, useMemo, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-import { useLessonsInDateRangeCustom } from "@/hooks/useLessonsInDateRangeCustom";
+import { useLessonsInDateRange } from "@/hooks/useLessonsInDateRange";
 import { useSyllabusForReports } from "@/hooks/useSyllabusForReports";
 import { generateAcademicYears, getCurrentAcademicYear, getMonthsInAcademicYear, getMonthDateRange } from "@/utils/academicYearUtils";
 import { generateTablePDF } from "@/utils/pdfUtils";
@@ -27,26 +28,18 @@ const MonthlyReport = () => {
 
   // Calculate date range for selected month in academic year
   const {
-    startDate: startDateStr,
-    endDate: endDateStr
+    startDate,
+    endDate
   } = getMonthDateRange(selectedMonth, selectedAcademicYear);
-  
-  // Convert strings to Date objects
-  const startDate = new Date(startDateStr);
-  const endDate = new Date(endDateStr);
-  
-  // Use the custom hook with Date objects
   const {
     lessons,
     loading,
     error
-  } = useLessonsInDateRangeCustom(startDate, endDate);
-  
+  } = useLessonsInDateRange(startDate, endDate);
   const {
     getTotalLessons,
     loading: syllabusLoading
   } = useSyllabusForReports();
-  
   console.log("Monthly Report - Academic year:", selectedAcademicYear);
   console.log("Monthly Report - Month:", selectedMonth);
   console.log("Monthly Report - Date range:", startDate, "to", endDate);
