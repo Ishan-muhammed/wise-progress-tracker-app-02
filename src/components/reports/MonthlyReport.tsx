@@ -105,7 +105,7 @@ const MonthlyReport = () => {
           </div>
           
           <div className="flex flex-col md:flex-row gap-2 md:items-center">
-            <span className="text-muted-foreground text-sm">Select Month:</span>
+            <span className="text-muted-foreground text-sm px-[12px]">Select Month:</span>
             <Select value={selectedMonth.toString()} onValueChange={value => setSelectedMonth(parseInt(value))}>
               <SelectTrigger className="max-w-xs">
                 <SelectValue>
@@ -121,7 +121,7 @@ const MonthlyReport = () => {
           </div>
           
           <div className="flex flex-col md:flex-row gap-2 md:items-center">
-            <span className="text-muted-foreground text-sm">Filter by Class:</span>
+            <span className="text-muted-foreground text-sm px-[12px]">Filter by Class:</span>
             <Select value={selectedClass} onValueChange={setSelectedClass}>
               <SelectTrigger className="max-w-xs">
                 <SelectValue>
