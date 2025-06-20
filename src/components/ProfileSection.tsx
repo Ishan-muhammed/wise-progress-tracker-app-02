@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,28 +12,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSubjects } from "@/hooks/useSubjects";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
 import LogoutButton from "@/components/LogoutButton";
+import DeleteAccountDialog from "@/components/DeleteAccountDialog";
+
 interface Profile {
   name: string;
   email: string;
   gender: string | null;
   age: number | null;
 }
+
 const ProfileSection = () => {
-  const {
-    user,
-    roles
-  } = useAuth();
-  const {
-    toast
-  } = useToast();
-  const {
-    subjects
-  } = useSubjects();
-  const {
-    userSubjects,
-    addSubject,
-    removeSubject
-  } = useUserSubjects();
+  const { user, roles } = useAuth();
+  const { toast } = useToast();
+  const { subjects } = useSubjects();
+  const { userSubjects, addSubject, removeSubject } = useUserSubjects();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -41,13 +34,17 @@ const ProfileSection = () => {
     age: ""
   });
   const [isLoading, setIsLoading] = useState(false);
+
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) return;
-      const {
-        data,
-        error
-      } = await supabase.from('profiles').select('name, email, gender, age').eq('id', user.id).single();
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('name, email, gender, age')
+        .eq('id', user.id)
+        .single();
+
       if (error) {
         console.error('Error fetching profile:', error);
       } else if (data) {
@@ -59,18 +56,24 @@ const ProfileSection = () => {
         });
       }
     };
+
     fetchProfile();
   }, [user]);
+
   const handleSaveProfile = async () => {
     if (!user) return;
+
     setIsLoading(true);
-    const {
-      error
-    } = await supabase.from('profiles').update({
-      name: formData.name,
-      gender: formData.gender || null,
-      age: formData.age ? parseInt(formData.age) : null
-    }).eq('id', user.id);
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        name: formData.name,
+        gender: formData.gender || null,
+        age: formData.age ? parseInt(formData.age) : null
+      })
+      .eq('id', user.id);
+
     if (error) {
       toast({
         title: "Error",
@@ -83,14 +86,20 @@ const ProfileSection = () => {
         description: "Profile updated successfully"
       });
       setIsEditing(false);
+      
       // Refresh profile data
-      const {
-        data
-      } = await supabase.from('profiles').select('name, email, gender, age').eq('id', user.id).single();
+      const { data } = await supabase
+        .from('profiles')
+        .select('name, email, gender, age')
+        .eq('id', user.id)
+        .single();
+      
       if (data) setProfile(data);
     }
+
     setIsLoading(false);
   };
+
   const handleSubjectChange = async (subjectId: string, checked: boolean) => {
     if (checked) {
       const success = await addSubject(subjectId);
@@ -110,17 +119,22 @@ const ProfileSection = () => {
       }
     }
   };
+
   if (!profile) {
     return <div>Loading profile...</div>;
   }
+
   const userSubjectIds = userSubjects.map(us => us.subject_id);
-  return <div className="space-y-6">
+
+  return (
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Personal Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {!isEditing ? <div className="space-y-4">
+          {!isEditing ? (
+            <div className="space-y-4">
               <div>
                 <Label className="text-sm font-medium text-gray-600">Name</Label>
                 <p className="text-lg">{profile.name}</p>
@@ -144,20 +158,24 @@ const ProfileSection = () => {
               <Button onClick={() => setIsEditing(true)} className="bg-[#039559]">
                 Edit Profile
               </Button>
-            </div> : <div className="space-y-4">
+            </div>
+          ) : (
+            <div className="space-y-4">
               <div>
                 <Label htmlFor="name">Name</Label>
-                <Input id="name" value={formData.name} onChange={e => setFormData({
-              ...formData,
-              name: e.target.value
-            })} placeholder="Enter your name" />
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Enter your name"
+                />
               </div>
               <div>
                 <Label htmlFor="gender">Gender</Label>
-                <Select value={formData.gender} onValueChange={value => setFormData({
-              ...formData,
-              gender: value
-            })}>
+                <Select
+                  value={formData.gender}
+                  onValueChange={(value) => setFormData({ ...formData, gender: value })}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select your gender" />
                   </SelectTrigger>
@@ -170,10 +188,15 @@ const ProfileSection = () => {
               </div>
               <div>
                 <Label htmlFor="age">Age</Label>
-                <Input id="age" type="number" value={formData.age} onChange={e => setFormData({
-              ...formData,
-              age: e.target.value
-            })} placeholder="Enter your age" min="1" max="150" />
+                <Input
+                  id="age"
+                  type="number"
+                  value={formData.age}
+                  onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                  placeholder="Enter your age"
+                  min="1"
+                  max="150"
+                />
               </div>
               <div className="flex space-x-2">
                 <Button onClick={handleSaveProfile} disabled={isLoading}>
@@ -183,7 +206,8 @@ const ProfileSection = () => {
                   Cancel
                 </Button>
               </div>
-            </div>}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -195,21 +219,34 @@ const ProfileSection = () => {
           <div className="space-y-3">
             <Label className="text-sm font-medium">Select the subjects you teach:</Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {subjects.map(subject => <div key={subject.id} className="flex items-center space-x-2">
-                  <Checkbox id={subject.id} checked={userSubjectIds.includes(subject.id)} onCheckedChange={checked => handleSubjectChange(subject.id, checked as boolean)} />
+              {subjects.map((subject) => (
+                <div key={subject.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={subject.id}
+                    checked={userSubjectIds.includes(subject.id)}
+                    onCheckedChange={(checked) => handleSubjectChange(subject.id, checked as boolean)}
+                  />
                   <Label htmlFor={subject.id} className="text-sm font-normal">
                     {subject.name}
                   </Label>
-                </div>)}
+                </div>
+              ))}
             </div>
-            {userSubjects.length > 0 && <div className="mt-4">
+            {userSubjects.length > 0 && (
+              <div className="mt-4">
                 <Label className="text-sm font-medium text-gray-600">Your Teaching Subjects:</Label>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {userSubjects.map(userSubject => <span key={userSubject.id} className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                  {userSubjects.map((userSubject) => (
+                    <span
+                      key={userSubject.id}
+                      className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm"
+                    >
                       {userSubject.subject_name}
-                    </span>)}
+                    </span>
+                  ))}
                 </div>
-              </div>}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -221,14 +258,22 @@ const ProfileSection = () => {
         <CardContent>
           <div className="flex flex-col space-y-3">
             <p className="text-sm text-gray-600 mb-3">
-              Sign out of your account to switch users or for security purposes.
+              Manage your account settings and security.
             </p>
-            <div className="flex justify-start">
+            <div className="flex flex-col space-y-3">
               <LogoutButton />
+              <div className="border-t pt-3">
+                <p className="text-sm text-red-600 mb-3">
+                  Danger Zone: This action cannot be undone.
+                </p>
+                <DeleteAccountDialog isCurrentUser={true} />
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 };
+
 export default ProfileSection;

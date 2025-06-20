@@ -1,7 +1,10 @@
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Mail, BookOpen, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import DeleteAccountDialog from "@/components/DeleteAccountDialog";
 
 interface TeacherCardProps {
   teacher: {
@@ -13,90 +16,110 @@ interface TeacherCardProps {
     subjects: string[];
     classes: string[];
   };
+  onTeacherDeleted?: () => void;
 }
 
-const TeacherCard = ({ teacher }: TeacherCardProps) => {
+const TeacherCard = ({ teacher, onTeacherDeleted }: TeacherCardProps) => {
   const navigate = useNavigate();
+  const { roles } = useAuth();
 
-  const handleCardClick = () => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on the delete button
+    if ((e.target as HTMLElement).closest('button')) {
+      return;
+    }
     navigate(`/teacher-profile/${teacher.id}`);
   };
 
+  const isAdmin = roles.includes('admin');
+
   return (
-    <Card 
-      className="hover:shadow-lg transition-shadow duration-200 cursor-pointer hover:bg-gray-50" 
-      onClick={handleCardClick}
-    >
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <h3 className="font-semibold text-lg text-gray-900">{teacher.name}</h3>
-            <div className="flex items-center text-sm text-gray-600 mt-1">
-              <Mail className="h-4 w-4 mr-1" />
-              {teacher.email}
+    <Card className="hover:shadow-lg transition-shadow duration-200 cursor-pointer hover:bg-gray-50">
+      <div onClick={handleCardClick}>
+        <CardHeader className="pb-3">
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <h3 className="font-semibold text-lg text-gray-900">{teacher.name}</h3>
+              <div className="flex items-center text-sm text-gray-600 mt-1">
+                <Mail className="h-4 w-4 mr-1" />
+                {teacher.email}
+              </div>
             </div>
           </div>
-        </div>
-      </CardHeader>
+        </CardHeader>
+        
+        <CardContent className="space-y-4">
+          {/* Demographics */}
+          {(teacher.gender || teacher.age) && (
+            <div className="text-sm text-gray-600">
+              {teacher.gender && <span>Gender: {teacher.gender}</span>}
+              {teacher.gender && teacher.age && <span> • </span>}
+              {teacher.age && <span>Age: {teacher.age}</span>}
+            </div>
+          )}
+
+          {/* Subjects */}
+          <div>
+            <div className="flex items-center text-sm font-medium text-gray-700 mb-2">
+              <BookOpen className="h-4 w-4 mr-1" />
+              Subjects ({teacher.subjects.length})
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {teacher.subjects.length > 0 ? (
+                teacher.subjects.slice(0, 3).map(subject => (
+                  <Badge key={subject} variant="secondary" className="text-xs">
+                    {subject}
+                  </Badge>
+                ))
+              ) : (
+                <span className="text-gray-400 text-sm">No subjects assigned</span>
+              )}
+              {teacher.subjects.length > 3 && (
+                <Badge variant="secondary" className="text-xs">
+                  +{teacher.subjects.length - 3} more
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* Assigned Classes */}
+          <div>
+            <div className="flex items-center text-sm font-medium text-gray-700 mb-2">
+              <Users className="h-4 w-4 mr-1" />
+              Classes ({teacher.classes.length})
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {teacher.classes.length > 0 ? (
+                teacher.classes.slice(0, 4).map(cls => (
+                  <Badge key={cls} variant="outline" className="text-xs">
+                    Class {cls}
+                  </Badge>
+                ))
+              ) : (
+                <span className="text-gray-400 text-sm">No classes assigned</span>
+              )}
+              {teacher.classes.length > 4 && (
+                <Badge variant="outline" className="text-xs">
+                  +{teacher.classes.length - 4} more
+                </Badge>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </div>
       
-      <CardContent className="space-y-4">
-        {/* Demographics */}
-        {(teacher.gender || teacher.age) && (
-          <div className="text-sm text-gray-600">
-            {teacher.gender && <span>Gender: {teacher.gender}</span>}
-            {teacher.gender && teacher.age && <span> • </span>}
-            {teacher.age && <span>Age: {teacher.age}</span>}
+      {/* Delete button for admins */}
+      {isAdmin && (
+        <CardContent className="pt-0">
+          <div className="flex justify-end border-t pt-3">
+            <DeleteAccountDialog
+              userId={teacher.id}
+              userName={teacher.name}
+              onSuccess={onTeacherDeleted}
+            />
           </div>
-        )}
-
-        {/* Subjects */}
-        <div>
-          <div className="flex items-center text-sm font-medium text-gray-700 mb-2">
-            <BookOpen className="h-4 w-4 mr-1" />
-            Subjects ({teacher.subjects.length})
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {teacher.subjects.length > 0 ? (
-              teacher.subjects.slice(0, 3).map(subject => (
-                <Badge key={subject} variant="secondary" className="text-xs">
-                  {subject}
-                </Badge>
-              ))
-            ) : (
-              <span className="text-gray-400 text-sm">No subjects assigned</span>
-            )}
-            {teacher.subjects.length > 3 && (
-              <Badge variant="secondary" className="text-xs">
-                +{teacher.subjects.length - 3} more
-              </Badge>
-            )}
-          </div>
-        </div>
-
-        {/* Assigned Classes */}
-        <div>
-          <div className="flex items-center text-sm font-medium text-gray-700 mb-2">
-            <Users className="h-4 w-4 mr-1" />
-            Classes ({teacher.classes.length})
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {teacher.classes.length > 0 ? (
-              teacher.classes.slice(0, 4).map(cls => (
-                <Badge key={cls} variant="outline" className="text-xs">
-                  Class {cls}
-                </Badge>
-              ))
-            ) : (
-              <span className="text-gray-400 text-sm">No classes assigned</span>
-            )}
-            {teacher.classes.length > 4 && (
-              <Badge variant="outline" className="text-xs">
-                +{teacher.classes.length - 4} more
-              </Badge>
-            )}
-          </div>
-        </div>
-      </CardContent>
+        </CardContent>
+      )}
     </Card>
   );
 };

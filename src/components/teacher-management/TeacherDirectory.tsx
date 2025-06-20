@@ -18,6 +18,11 @@ interface TeacherDirectoryProps {
 }
 
 const TeacherDirectory = ({ teachers, onRefresh }: TeacherDirectoryProps) => {
+  const handleTeacherDeleted = () => {
+    // Refresh the teacher list when a teacher is deleted
+    onRefresh();
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -35,7 +40,11 @@ const TeacherDirectory = ({ teachers, onRefresh }: TeacherDirectoryProps) => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {teachers.map((teacher) => (
-              <TeacherCard key={teacher.id} teacher={teacher} />
+              <TeacherCard 
+                key={teacher.id} 
+                teacher={teacher} 
+                onTeacherDeleted={handleTeacherDeleted}
+              />
             ))}
           </div>
         )}
