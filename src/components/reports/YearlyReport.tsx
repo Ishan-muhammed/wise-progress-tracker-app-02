@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -16,7 +15,11 @@ const YearlyReport = () => {
   const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>(getCurrentAcademicYear());
   
   // Get date range for selected academic year
-  const { startDate, endDate } = getAcademicYearDateRange(selectedAcademicYear);
+  const { startDate: startDateStr, endDate: endDateStr } = getAcademicYearDateRange(selectedAcademicYear);
+  
+  // Convert strings to Date objects
+  const startDate = new Date(startDateStr);
+  const endDate = new Date(endDateStr);
   
   const { lessons, loading, error } = useLessonsInDateRangeCustom(startDate, endDate);
   const { syllabusLookup, loading: syllabusLoading, getTotalLessons } = useSyllabusForReports();

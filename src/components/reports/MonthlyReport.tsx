@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -28,9 +27,13 @@ const MonthlyReport = () => {
 
   // Calculate date range for selected month in academic year
   const {
-    startDate,
-    endDate
+    startDate: startDateStr,
+    endDate: endDateStr
   } = getMonthDateRange(selectedMonth, selectedAcademicYear);
+  
+  // Convert strings to Date objects
+  const startDate = new Date(startDateStr);
+  const endDate = new Date(endDateStr);
   
   // Use the custom hook with Date objects
   const {
