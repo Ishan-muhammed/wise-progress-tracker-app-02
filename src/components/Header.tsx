@@ -97,8 +97,11 @@ const Header = () => {
     welcomeText = "User";
   }
 
+  // Construct the Supabase Storage URL for the logo
+  const logoUrl = `${supabase.supabaseUrl}/storage/v1/object/public/logos/wise-logo.png`;
+  
   console.log("Logo error state:", logoError);
-  console.log("Attempting to load logo from:", "/lovable-uploads/672075cf-2f42-43eb-bf6d-cb2cdbf6134e.png");
+  console.log("Attempting to load logo from:", logoUrl);
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -107,7 +110,7 @@ const Header = () => {
           <div className="flex items-center space-x-4">
             {!logoError ? (
               <img 
-                src="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=400&h=200&fit=crop&crop=center"
+                src={logoUrl}
                 alt="WISE Logo" 
                 className="h-12 w-auto object-contain"
                 onLoad={() => console.log("Logo loaded successfully")}
