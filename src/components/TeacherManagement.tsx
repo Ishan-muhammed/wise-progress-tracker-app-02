@@ -29,14 +29,13 @@ const TeacherManagement = () => {
       const teacherLessons = lessons.filter(lesson => lesson.user_id === teacher.id);
       const completedLessons = teacherLessons.filter(lesson => lesson.completed);
       const subjects = [...new Set(teacherLessons.map(lesson => lesson.subject))];
-      const classes = [...new Set(teacherLessons.map(lesson => lesson.class))].sort();
       
       return {
         Name: teacher.name,
         Email: teacher.email,
         Gender: teacher.gender || 'Not specified',
         Age: teacher.age || 'Not specified',
-        Classes: classes.join('; '),
+        Classes: teacher.classes.join('; '),
         Subjects: subjects.join('; '),
         'Total Lessons': teacherLessons.length,
         'Completed Lessons': completedLessons.length,
@@ -96,9 +95,9 @@ const TeacherManagement = () => {
     );
   }
 
-  // Calculate statistics
+  // Calculate statistics using assigned classes instead of derived from lessons
   const totalSubjects = [...new Set(lessons.map(lesson => lesson.subject))].length;
-  const totalClasses = [...new Set(lessons.map(lesson => lesson.class))].length;
+  const totalClasses = [...new Set(teachers.flatMap(teacher => teacher.classes))].length;
 
   // Calculate teacher statistics for completion rate
   const teacherStats = teachers.map(teacher => {
@@ -107,17 +106,13 @@ const TeacherManagement = () => {
     const totalLessons = teacherLessons.length;
     const completionRate = totalLessons > 0 ? Math.round((completedLessons.length / totalLessons) * 100) : 0;
     const subjects = [...new Set(teacherLessons.map(lesson => lesson.subject))];
-    const classes = [...new Set(teacherLessons.map(lesson => lesson.class))].sort((a, b) => 
-      parseInt(a) - parseInt(b)
-    );
 
     return {
       ...teacher,
       totalLessons,
       completedLessons: completedLessons.length,
       completionRate,
-      subjects,
-      classes
+      subjects
     };
   });
 
@@ -129,7 +124,7 @@ const TeacherManagement = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Teacher Management</h2>
-          <p className="text-gray-600">Comprehensive overview of all teachers and their activities</p>
+          <p className="text-gray-600 text-center">Comprehensive overview of all teachers and their activities</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={handleRefresh} variant="outline" size="sm">

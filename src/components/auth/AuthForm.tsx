@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { RoleSelector } from "./RoleSelector";
 import { SubjectSelector } from "./SubjectSelector";
+import { ClassSelector } from "./ClassSelector";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface AuthFormProps {
@@ -21,6 +22,7 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
   const [name, setName] = useState("");
   const [roles, setRoles] = useState<string[]>(["teacher"]);
   const [subjects, setSubjects] = useState<string[]>([]);
+  const [classes, setClasses] = useState<string[]>([]);
   const [gender, setGender] = useState("");
   const [age, setAge] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -101,6 +103,15 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
       return;
     }
 
+    if (!isLogin && classes.length === 0) {
+      toast({
+        title: "Classes Required",
+        description: "Please select at least one class you teach.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!name.trim()) {
       toast({
         title: "Name Required",
@@ -134,6 +145,7 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
             name: name.trim(),
             role: roles[0],
             subjects,
+            classes,
             gender: gender || null,
             age: parseInt(age)
           }
@@ -162,6 +174,24 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
           
           if (roleError) {
             console.error('Error adding additional role:', role, roleError);
+          }
+        }
+      }
+
+      // Insert user classes
+      if (data.user && classes.length > 0) {
+        console.log('Adding user classes:', classes);
+        
+        for (const className of classes) {
+          const { error: classError } = await supabase
+            .from('user_classes')
+            .insert({
+              user_id: data.user.id,
+              class: className
+            });
+          
+          if (classError) {
+            console.error('Error adding class:', className, classError);
           }
         }
       }
@@ -227,6 +257,7 @@ export const AuthForm = ({ isLogin, onToggleMode }: AuthFormProps) => {
           </div>
           <RoleSelector roles={roles} setRoles={setRoles} />
           <SubjectSelector subjects={subjects} setSubjects={setSubjects} />
+          <ClassSelector selectedClasses={classes} setSelectedClasses={setClasses} />
         </>
       )}
       <div className="space-y-2">
