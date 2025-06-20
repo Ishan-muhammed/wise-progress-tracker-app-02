@@ -1,3 +1,4 @@
+
 import { useState, useMemo, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -121,7 +122,7 @@ const MonthlyReport = () => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Monthly Report - {currentMonthLabel} ({selectedAcademicYear})</CardHeader>
+          <CardTitle>Monthly Report - {currentMonthLabel} ({selectedAcademicYear})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-red-500">Error: {error}</div>
@@ -156,9 +157,11 @@ const MonthlyReport = () => {
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {academicYears.map(year => <SelectItem key={year.label} value={year.label}>
+                {academicYears.map(year => (
+                  <SelectItem key={year.label} value={year.label}>
                     {year.label}
-                  </SelectItem>)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -172,9 +175,11 @@ const MonthlyReport = () => {
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {academicMonths.map(month => <SelectItem key={month.value} value={month.value.toString()}>
+                {academicMonths.map(month => (
+                  <SelectItem key={month.value} value={month.value.toString()}>
                     {month.label}
-                  </SelectItem>)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -189,9 +194,11 @@ const MonthlyReport = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Classes</SelectItem>
-                {ALL_CLASSES.map(classVal => <SelectItem key={classVal} value={classVal}>
+                {ALL_CLASSES.map(classVal => (
+                  <SelectItem key={classVal} value={classVal}>
                     Class {classVal}
-                  </SelectItem>)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
