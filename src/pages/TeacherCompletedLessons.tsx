@@ -98,21 +98,26 @@ const TeacherCompletedLessons = () => {
             <span className="text-foreground font-medium">Completed Lessons</span>
           </nav>
           
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="h-6 w-6 text-green-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold">Completed Lessons</h1>
-                <p className="text-muted-foreground">
-                  {teacher.name} • {teacher.status === 'archived' && <Badge variant="secondary" className="ml-2">Archived</Badge>}
+                <h1 className="text-2xl sm:text-3xl font-bold">Completed Lessons</h1>
+                <p className="text-muted-foreground text-sm sm:text-base">
+                  {teacher.name} {teacher.status === 'archived' && <Badge variant="secondary" className="ml-2">Archived</Badge>}
                 </p>
               </div>
             </div>
-            <Button variant="outline" onClick={() => navigate(`/teacher-profile/${teacherId}`)} className="flex items-center bg-[#039559] text-slate-50">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate(`/teacher-profile/${teacherId}`)} 
+              className="flex items-center bg-[#039559] text-slate-50 self-start sm:self-auto"
+            >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Profile
+              <span className="hidden sm:inline">Back to Profile</span>
+              <span className="sm:hidden">Back</span>
             </Button>
           </div>
         </div>

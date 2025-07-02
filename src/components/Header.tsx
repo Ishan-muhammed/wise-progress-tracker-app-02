@@ -127,13 +127,13 @@ const Header = () => {
               </div>
             )}
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             {showMenu && (
               <Menubar>
                 <MenubarMenu>
-                  <MenubarTrigger className="cursor-pointer">
+                  <MenubarTrigger className="cursor-pointer flex items-center">
                     <Menu className="h-4 w-4" />
-                    <span className="ml-2">Switch Dashboard</span>
+                    <span className="ml-2 hidden sm:inline">Switch Dashboard</span>
                   </MenubarTrigger>
                   <MenubarContent>
                     {roles.includes("teacher") && (
@@ -154,8 +154,10 @@ const Header = () => {
               variant="outline" 
               onClick={handleLogout}
               disabled={isLoggingOut}
+              className="text-sm px-3 sm:px-4"
             >
-              {isLoggingOut ? "Logging out..." : "Logout"}
+              <span className="hidden sm:inline">{isLoggingOut ? "Logging out..." : "Logout"}</span>
+              <span className="sm:hidden">{isLoggingOut ? "..." : "Out"}</span>
             </Button>
           </div>
         </div>
