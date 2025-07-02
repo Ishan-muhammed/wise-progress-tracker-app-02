@@ -1,9 +1,13 @@
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Mail, BookOpen, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Mail, BookOpen, Users, Archive, RotateCcw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import TeacherStatusBadge from "./TeacherStatusBadge";
+import TeacherArchiveDialog from "./TeacherArchiveDialog";
+import { useState } from "react";
 
 interface TeacherCardProps {
   teacher: {
@@ -14,14 +18,28 @@ interface TeacherCardProps {
     age: number | null;
     subjects: string[];
     classes: string[];
+    status: 'active' | 'inactive' | 'archived';
+    last_active_at?: string | null;
   };
   onTeacherDeleted?: () => void;
+  onArchive?: (teacherId: string, reason?: string) => Promise<boolean>;
+  onRestore?: (teacherId: string) => Promise<boolean>;
 }
 
-const TeacherCard = ({ teacher, onTeacherDeleted }: TeacherCardProps) => {
+const TeacherCard = ({ teacher, onTeacherDeleted, onArchive, onRestore }: TeacherCardProps) => {
   const navigate = useNavigate();
+  const { roles } = useAuth();
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
+  
+  const isAdmin = roles.includes('admin');
+  
   const handleCardClick = () => {
     navigate(`/teacher-profile/${teacher.id}`);
+  };
+
+  const handleArchiveClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowArchiveDialog(true);
   };
 
   return (
@@ -30,8 +48,30 @@ const TeacherCard = ({ teacher, onTeacherDeleted }: TeacherCardProps) => {
         <CardHeader className="pb-3">
           <div className="flex justify-between items-start">
             <div className="flex-1">
-              <h3 className="font-semibold text-lg text-gray-900">{teacher.name}</h3>
-              <div className="flex items-center text-sm text-gray-600 mt-1">
+              <div className="flex items-start justify-between mb-2">
+                <h3 className="font-semibold text-lg text-gray-900">{teacher.name}</h3>
+                <div className="flex items-center gap-2">
+                  <TeacherStatusBadge 
+                    status={teacher.status} 
+                    lastActiveAt={teacher.last_active_at}
+                  />
+                  {isAdmin && (onArchive || onRestore) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleArchiveClick}
+                      className="h-8 w-8 p-0"
+                    >
+                      {teacher.status === 'archived' ? (
+                        <RotateCcw className="h-4 w-4" />
+                      ) : (
+                        <Archive className="h-4 w-4" />
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center text-sm text-gray-600">
                 <Mail className="h-4 w-4 mr-1" />
                 {teacher.email}
               </div>
@@ -98,6 +138,16 @@ const TeacherCard = ({ teacher, onTeacherDeleted }: TeacherCardProps) => {
           </div>
         </CardContent>
       </div>
+      
+      {showArchiveDialog && (
+        <TeacherArchiveDialog
+          teacher={teacher}
+          isOpen={showArchiveDialog}
+          onClose={() => setShowArchiveDialog(false)}
+          onArchive={onArchive!}
+          onRestore={onRestore!}
+        />
+      )}
     </Card>
   );
 };

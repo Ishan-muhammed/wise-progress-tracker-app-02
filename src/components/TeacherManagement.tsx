@@ -6,13 +6,26 @@ import { useLessons } from "@/hooks/useLessons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RefreshCw, LayoutGrid, List } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getCurrentAcademicYear } from "@/utils/academicYearUtils";
 import TeacherStatistics from "./teacher-management/TeacherStatistics";
 import TeacherDirectory from "./teacher-management/TeacherDirectory";
+import TeacherFilters from "./teacher-management/TeacherFilters";
 
 const TeacherManagement = () => {
-  const { profiles: teachers, loading: teachersLoading, error: teachersError, refetch } = useTeacherProfiles();
-  const { lessons, loading: lessonsLoading } = useLessons();
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'archived'>('active');
+  const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
+  
+  const { 
+    profiles: teachers, 
+    loading: teachersLoading, 
+    error: teachersError, 
+    refetch,
+    archiveTeacher,
+    restoreTeacher
+  } = useTeacherProfiles({ statusFilter, academicYear });
+  
+  const { lessons, loading: lessonsLoading } = useLessons();
   const { toast } = useToast();
 
   const handleRefresh = () => {
@@ -54,13 +67,16 @@ const TeacherManagement = () => {
     );
   }
 
+  // Filter lessons by academic year if needed
+  const filteredLessons = lessons; // You can add academic year filtering here if needed
+  
   // Calculate statistics
-  const totalSubjects = [...new Set(lessons.map(lesson => lesson.subject))].length;
-  const totalClasses = [...new Set(lessons.map(lesson => lesson.class))].length;
+  const totalSubjects = [...new Set(filteredLessons.map(lesson => lesson.subject))].length;
+  const totalClasses = [...new Set(filteredLessons.map(lesson => lesson.class))].length;
 
   // Calculate teacher statistics for completion rate
   const teacherStats = teachers.map(teacher => {
-    const teacherLessons = lessons.filter(lesson => lesson.user_id === teacher.id);
+    const teacherLessons = filteredLessons.filter(lesson => lesson.user_id === teacher.id);
     const completedLessons = teacherLessons.filter(lesson => lesson.completed);
     const totalLessons = teacherLessons.length;
     const completionRate = totalLessons > 0 ? Math.round((completedLessons.length / totalLessons) * 100) : 0;
@@ -75,7 +91,9 @@ const TeacherManagement = () => {
       completedLessons: completedLessons.length,
       completionRate,
       subjects,
-      classes
+      classes,
+      status: teacher.status,
+      last_active_at: teacher.last_active_at
     };
   });
 
@@ -94,6 +112,14 @@ const TeacherManagement = () => {
           Refresh
         </Button>
       </div>
+
+      {/* Filters */}
+      <TeacherFilters
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        academicYear={academicYear}
+        onAcademicYearChange={setAcademicYear}
+      />
 
       {/* Statistics Cards */}
       <TeacherStatistics
@@ -126,7 +152,12 @@ const TeacherManagement = () => {
       </div>
 
       {/* Teacher Directory */}
-      <TeacherDirectory teachers={teacherStats} onRefresh={handleRefresh} />
+      <TeacherDirectory 
+        teachers={teacherStats} 
+        onRefresh={handleRefresh}
+        onArchive={archiveTeacher}
+        onRestore={restoreTeacher}
+      />
     </div>
   );
 };

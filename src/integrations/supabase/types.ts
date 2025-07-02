@@ -51,32 +51,52 @@ export type Database = {
       profiles: {
         Row: {
           age: number | null
+          archived_at: string | null
+          archived_by: string | null
           created_at: string
           email: string
           gender: string | null
           id: string
+          last_active_at: string | null
           name: string
+          status: string | null
           updated_at: string
         }
         Insert: {
           age?: number | null
+          archived_at?: string | null
+          archived_by?: string | null
           created_at?: string
           email: string
           gender?: string | null
           id: string
+          last_active_at?: string | null
           name: string
+          status?: string | null
           updated_at?: string
         }
         Update: {
           age?: number | null
+          archived_at?: string | null
+          archived_by?: string | null
           created_at?: string
           email?: string
           gender?: string | null
           id?: string
+          last_active_at?: string | null
           name?: string
+          status?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_archived_by_fkey"
+            columns: ["archived_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subjects: {
         Row: {
@@ -196,9 +216,17 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      archive_teacher: {
+        Args: { teacher_id: string; reason?: string }
+        Returns: boolean
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      restore_teacher: {
+        Args: { teacher_id: string }
+        Returns: boolean
       }
     }
     Enums: {

@@ -13,11 +13,15 @@ interface TeacherDirectoryProps {
     age: number | null;
     subjects: string[];
     classes: string[];
+    status: 'active' | 'inactive' | 'archived';
+    last_active_at?: string | null;
   }>;
   onRefresh: () => void;
+  onArchive?: (teacherId: string, reason?: string) => Promise<boolean>;
+  onRestore?: (teacherId: string) => Promise<boolean>;
 }
 
-const TeacherDirectory = ({ teachers, onRefresh }: TeacherDirectoryProps) => {
+const TeacherDirectory = ({ teachers, onRefresh, onArchive, onRestore }: TeacherDirectoryProps) => {
   const handleTeacherDeleted = () => {
     // Refresh the teacher list when a teacher is deleted
     onRefresh();
@@ -44,6 +48,8 @@ const TeacherDirectory = ({ teachers, onRefresh }: TeacherDirectoryProps) => {
                 key={teacher.id} 
                 teacher={teacher} 
                 onTeacherDeleted={handleTeacherDeleted}
+                onArchive={onArchive}
+                onRestore={onRestore}
               />
             ))}
           </div>

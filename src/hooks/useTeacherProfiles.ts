@@ -8,14 +8,25 @@ interface TeacherProfile {
   email: string;
   gender: string | null;
   age: number | null;
+  status: 'active' | 'inactive' | 'archived';
+  archived_at: string | null;
+  archived_by: string | null;
+  last_active_at: string | null;
 }
 
-export const useTeacherProfiles = () => {
+export interface TeacherProfilesOptions {
+  statusFilter?: 'all' | 'active' | 'inactive' | 'archived';
+  academicYear?: string;
+}
+
+export const useTeacherProfiles = (options: TeacherProfilesOptions = {}) => {
   const [profiles, setProfiles] = useState<TeacherProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const isUnmountedRef = useRef(false);
+  
+  const { statusFilter = 'active', academicYear } = options;
 
   // Cleanup on unmount
   useEffect(() => {
@@ -68,17 +79,28 @@ export const useTeacherProfiles = () => {
       const teacherIds = teacherRoles.map(role => role.user_id);
       console.log('Found teacher IDs:', teacherIds);
 
-      // Now get the profiles for these teachers
-      const { data, error } = await supabase
+      // Build query with status filtering
+      let query = supabase
         .from('profiles')
         .select(`
           id, 
           name, 
           email, 
           gender, 
-          age
+          age,
+          status,
+          archived_at,
+          archived_by,
+          last_active_at
         `)
         .in('id', teacherIds);
+
+      // Apply status filter
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
+
+      const { data, error } = await query;
 
       if (signal.aborted || isUnmountedRef.current) return;
 
@@ -92,7 +114,11 @@ export const useTeacherProfiles = () => {
           name: profile.name,
           email: profile.email,
           gender: profile.gender,
-          age: profile.age
+          age: profile.age,
+          status: profile.status || 'active',
+          archived_at: profile.archived_at,
+          archived_by: profile.archived_by,
+          last_active_at: profile.last_active_at
         })) || [];
         
         if (!isUnmountedRef.current) {
@@ -109,7 +135,7 @@ export const useTeacherProfiles = () => {
         setLoading(false);
       }
     }
-  }, []);
+  }, [statusFilter, academicYear]);
 
   useEffect(() => {
     fetchProfiles();
@@ -124,5 +150,46 @@ export const useTeacherProfiles = () => {
     fetchProfiles();
   }, [fetchProfiles]);
 
-  return { profiles, loading, error, getTeacherName, refetch };
+  const archiveTeacher = useCallback(async (teacherId: string, reason?: string) => {
+    try {
+      const { data, error } = await supabase.rpc('archive_teacher', {
+        teacher_id: teacherId,
+        reason: reason || null
+      });
+
+      if (error) {
+        console.error('Error archiving teacher:', error);
+        return false;
+      }
+
+      // Refresh the profiles list
+      await fetchProfiles();
+      return data;
+    } catch (error) {
+      console.error('Error archiving teacher:', error);
+      return false;
+    }
+  }, [fetchProfiles]);
+
+  const restoreTeacher = useCallback(async (teacherId: string) => {
+    try {
+      const { data, error } = await supabase.rpc('restore_teacher', {
+        teacher_id: teacherId
+      });
+
+      if (error) {
+        console.error('Error restoring teacher:', error);
+        return false;
+      }
+
+      // Refresh the profiles list
+      await fetchProfiles();
+      return data;
+    } catch (error) {
+      console.error('Error restoring teacher:', error);
+      return false;
+    }
+  }, [fetchProfiles]);
+
+  return { profiles, loading, error, getTeacherName, refetch, archiveTeacher, restoreTeacher };
 };
