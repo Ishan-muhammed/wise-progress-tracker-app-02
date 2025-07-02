@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Mail, BookOpen, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import DeleteAccountDialog from "@/components/DeleteAccountDialog";
 
 interface TeacherCardProps {
   teacher: {
@@ -21,17 +20,9 @@ interface TeacherCardProps {
 
 const TeacherCard = ({ teacher, onTeacherDeleted }: TeacherCardProps) => {
   const navigate = useNavigate();
-  const { roles } = useAuth();
-
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Don't navigate if clicking on the delete button
-    if ((e.target as HTMLElement).closest('button')) {
-      return;
-    }
+  const handleCardClick = () => {
     navigate(`/teacher-profile/${teacher.id}`);
   };
-
-  const isAdmin = roles.includes('admin');
 
   return (
     <Card className="hover:shadow-lg transition-shadow duration-200 cursor-pointer hover:bg-gray-50">
@@ -107,19 +98,6 @@ const TeacherCard = ({ teacher, onTeacherDeleted }: TeacherCardProps) => {
           </div>
         </CardContent>
       </div>
-      
-      {/* Delete button for admins */}
-      {isAdmin && (
-        <CardContent className="pt-0">
-          <div className="flex justify-end border-t pt-3">
-            <DeleteAccountDialog
-              userId={teacher.id}
-              userName={teacher.name}
-              onSuccess={onTeacherDeleted}
-            />
-          </div>
-        </CardContent>
-      )}
     </Card>
   );
 };

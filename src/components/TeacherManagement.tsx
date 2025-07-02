@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useTeacherProfiles } from "@/hooks/useTeacherProfiles";
 import { useLessons } from "@/hooks/useLessons";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, RefreshCw, LayoutGrid, List } from "lucide-react";
+import { RefreshCw, LayoutGrid, List } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import TeacherStatistics from "./teacher-management/TeacherStatistics";
 import TeacherDirectory from "./teacher-management/TeacherDirectory";
@@ -23,48 +23,6 @@ const TeacherManagement = () => {
     });
   };
 
-  const handleExportData = () => {
-    // Create CSV data
-    const csvData = teachers.map(teacher => {
-      const teacherLessons = lessons.filter(lesson => lesson.user_id === teacher.id);
-      const completedLessons = teacherLessons.filter(lesson => lesson.completed);
-      const subjects = [...new Set(teacherLessons.map(lesson => lesson.subject))];
-      const classes = [...new Set(teacherLessons.map(lesson => lesson.class))].sort();
-      
-      return {
-        Name: teacher.name,
-        Email: teacher.email,
-        Gender: teacher.gender || 'Not specified',
-        Age: teacher.age || 'Not specified',
-        Classes: classes.join('; '),
-        Subjects: subjects.join('; '),
-        'Total Lessons': teacherLessons.length,
-        'Completed Lessons': completedLessons.length,
-        'Completion Rate': teacherLessons.length > 0 ? Math.round((completedLessons.length / teacherLessons.length) * 100) + '%' : '0%'
-      };
-    });
-
-    // Convert to CSV
-    const headers = Object.keys(csvData[0] || {});
-    const csvContent = [
-      headers.join(','),
-      ...csvData.map(row => headers.map(header => `"${row[header as keyof typeof row]}"`).join(','))
-    ].join('\n');
-
-    // Download file
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `teachers_report_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-
-    toast({
-      title: "Export Complete",
-      description: "Teacher data has been exported to CSV.",
-    });
-  };
 
   if (teachersLoading || lessonsLoading) {
     return (
@@ -131,16 +89,10 @@ const TeacherManagement = () => {
           <h2 className="text-2xl font-bold text-gray-900">Teacher Management</h2>
           <p className="text-gray-600">Comprehensive overview of all teachers and their activities</p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={handleRefresh} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-          <Button onClick={handleExportData} variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-        </div>
+        <Button onClick={handleRefresh} variant="outline" size="sm">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
       </div>
 
       {/* Statistics Cards */}
