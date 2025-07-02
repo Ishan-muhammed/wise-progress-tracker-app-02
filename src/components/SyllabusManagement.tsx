@@ -154,13 +154,18 @@ const SyllabusManagement = () => {
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle>Syllabus Management</CardTitle>
-          <div className="flex gap-4 items-center">
-            <div className="flex flex-col md:flex-row gap-2 md:items-center">
-              <span className="text-muted-foreground text-sm px-[12px]">Filter by Class:</span>
+        <div className="space-y-4">
+          {/* First row: Title */}
+          <div className="text-center sm:text-left">
+            <CardTitle>Syllabus Management</CardTitle>
+          </div>
+          
+          {/* Second row: Filter and Add button */}
+          <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-end gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Filter by Class:</span>
               <Select value={selectedClass} onValueChange={setSelectedClass}>
-                <SelectTrigger className="max-w-xs">
+                <SelectTrigger className="w-40">
                   <SelectValue>
                     {selectedClass === "all" ? "All Classes" : `Class ${selectedClass}`}
                   </SelectValue>
