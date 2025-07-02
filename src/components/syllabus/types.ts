@@ -2,11 +2,14 @@ export interface SyllabusFormData {
   subject: string;
   class: string;
   total_lessons: string;
+  academic_year: string;
 }
 
 export interface SyllabusHeaderProps {
   selectedClass: string;
   onClassChange: (value: string) => void;
+  selectedAcademicYear: string;
+  onAcademicYearChange: (value: string) => void;
   isAddDialogOpen: boolean;
   setIsAddDialogOpen: (open: boolean) => void;
   onResetForm: () => void;

@@ -8,6 +8,7 @@ export interface SyllabusItem {
   subject: string;
   class: string;
   total_lessons: number;
+  academic_year: string;
   created_at: string;
   updated_at: string;
 }

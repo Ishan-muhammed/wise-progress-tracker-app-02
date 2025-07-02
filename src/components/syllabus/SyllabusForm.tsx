@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { subjects, classes } from "./constants";
 import { SyllabusFormProps } from "./types";
+import { generateAcademicYears } from "@/utils/academicYearUtils";
 
 const SyllabusForm = ({
   editingItem,
@@ -13,6 +14,7 @@ const SyllabusForm = ({
   onSubmit,
   onCancel
 }: SyllabusFormProps) => {
+  const academicYears = generateAcademicYears(2025, 5);
   return (
     <DialogContent>
       <DialogHeader>
@@ -52,6 +54,24 @@ const SyllabusForm = ({
               {classes.map(cls => (
                 <SelectItem key={cls} value={cls}>
                   Class {cls}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="academic_year">Academic Year</Label>
+          <Select
+            value={formData.academic_year}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, academic_year: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select academic year" />
+            </SelectTrigger>
+            <SelectContent>
+              {academicYears.map(year => (
+                <SelectItem key={year.label} value={year.label}>
+                  {year.label}
                 </SelectItem>
               ))}
             </SelectContent>

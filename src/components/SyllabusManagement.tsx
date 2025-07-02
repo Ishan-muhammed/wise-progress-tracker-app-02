@@ -8,8 +8,10 @@ import SyllabusForm from "./syllabus/SyllabusForm";
 import SyllabusTable from "./syllabus/SyllabusTable";
 import SyllabusEmptyState from "./syllabus/SyllabusEmptyState";
 import { SyllabusFormData } from "./syllabus/types";
+import { getCurrentAcademicYear } from "@/utils/academicYearUtils";
 
 const SyllabusManagement = () => {
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>(getCurrentAcademicYear());
   const { syllabus, loading, error, addSyllabusItem, updateSyllabusItem, deleteSyllabusItem } = useSyllabus();
   const { toast } = useToast();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -18,24 +20,28 @@ const SyllabusManagement = () => {
   const [formData, setFormData] = useState<SyllabusFormData>({
     subject: "",
     class: "",
-    total_lessons: ""
+    total_lessons: "",
+    academic_year: selectedAcademicYear
   });
 
-  // Filter syllabus by selected class
+  // Filter syllabus by selected class and academic year
   const filteredSyllabus = useMemo(() => {
-    if (selectedClass === "all") return syllabus;
-    return syllabus.filter(item => item.class === selectedClass);
-  }, [syllabus, selectedClass]);
+    let filtered = syllabus.filter(item => item.academic_year === selectedAcademicYear);
+    if (selectedClass !== "all") {
+      filtered = filtered.filter(item => item.class === selectedClass);
+    }
+    return filtered;
+  }, [syllabus, selectedClass, selectedAcademicYear]);
 
   const resetForm = () => {
-    setFormData({ subject: "", class: "", total_lessons: "" });
+    setFormData({ subject: "", class: "", total_lessons: "", academic_year: selectedAcademicYear });
     setEditingItem(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.subject || !formData.class || !formData.total_lessons) {
+    if (!formData.subject || !formData.class || !formData.total_lessons || !formData.academic_year) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
@@ -60,13 +66,15 @@ const SyllabusManagement = () => {
         result = await updateSyllabusItem(editingItem.id, {
           subject: formData.subject,
           class: formData.class,
-          total_lessons: totalLessons
+          total_lessons: totalLessons,
+          academic_year: formData.academic_year
         });
       } else {
         result = await addSyllabusItem({
           subject: formData.subject,
           class: formData.class,
-          total_lessons: totalLessons
+          total_lessons: totalLessons,
+          academic_year: formData.academic_year
         });
       }
 
@@ -98,7 +106,8 @@ const SyllabusManagement = () => {
     setFormData({
       subject: item.subject,
       class: item.class,
-      total_lessons: item.total_lessons.toString()
+      total_lessons: item.total_lessons.toString(),
+      academic_year: item.academic_year
     });
     setIsAddDialogOpen(true);
   };
@@ -130,13 +139,15 @@ const SyllabusManagement = () => {
     return (
       <Card>
         <CardHeader>
-          <SyllabusHeader
-            selectedClass={selectedClass}
-            onClassChange={setSelectedClass}
-            isAddDialogOpen={isAddDialogOpen}
-            setIsAddDialogOpen={setIsAddDialogOpen}
-            onResetForm={resetForm}
-          />
+        <SyllabusHeader
+          selectedClass={selectedClass}
+          onClassChange={setSelectedClass}
+          selectedAcademicYear={selectedAcademicYear}
+          onAcademicYearChange={setSelectedAcademicYear}
+          isAddDialogOpen={isAddDialogOpen}
+          setIsAddDialogOpen={setIsAddDialogOpen}
+          onResetForm={resetForm}
+        />
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">Loading syllabus...</div>
@@ -149,13 +160,15 @@ const SyllabusManagement = () => {
     return (
       <Card>
         <CardHeader>
-          <SyllabusHeader
-            selectedClass={selectedClass}
-            onClassChange={setSelectedClass}
-            isAddDialogOpen={isAddDialogOpen}
-            setIsAddDialogOpen={setIsAddDialogOpen}
-            onResetForm={resetForm}
-          />
+        <SyllabusHeader
+          selectedClass={selectedClass}
+          onClassChange={setSelectedClass}
+          selectedAcademicYear={selectedAcademicYear}
+          onAcademicYearChange={setSelectedAcademicYear}
+          isAddDialogOpen={isAddDialogOpen}
+          setIsAddDialogOpen={setIsAddDialogOpen}
+          onResetForm={resetForm}
+        />
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-red-500">Error: {error}</div>
@@ -170,6 +183,8 @@ const SyllabusManagement = () => {
         <SyllabusHeader
           selectedClass={selectedClass}
           onClassChange={setSelectedClass}
+          selectedAcademicYear={selectedAcademicYear}
+          onAcademicYearChange={setSelectedAcademicYear}
           isAddDialogOpen={isAddDialogOpen}
           setIsAddDialogOpen={setIsAddDialogOpen}
           onResetForm={resetForm}

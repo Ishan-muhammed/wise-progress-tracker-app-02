@@ -101,6 +101,7 @@ export type Database = {
       }
       syllabus: {
         Row: {
+          academic_year: string
           class: string
           created_at: string | null
           id: string
@@ -109,6 +110,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          academic_year?: string
           class: string
           created_at?: string | null
           id?: string
@@ -117,6 +119,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          academic_year?: string
           class?: string
           created_at?: string | null
           id?: string

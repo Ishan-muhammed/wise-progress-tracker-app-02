@@ -7,7 +7,7 @@ export interface SyllabusLookup {
   [key: string]: number; // key format: "subject-class", value: total_lessons
 }
 
-export const useSyllabusForReports = () => {
+export const useSyllabusForReports = (academicYear?: string) => {
   const [syllabusLookup, setSyllabusLookup] = useState<SyllabusLookup>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,9 +24,15 @@ export const useSyllabusForReports = () => {
       setLoading(true);
       setError(null);
 
-      const { data, error: syllabusError } = await supabase
+      let query = supabase
         .from('syllabus')
-        .select('subject, class, total_lessons');
+        .select('subject, class, total_lessons, academic_year');
+      
+      if (academicYear) {
+        query = query.eq('academic_year', academicYear);
+      }
+      
+      const { data, error: syllabusError } = await query;
 
       if (syllabusError) {
         setError('Failed to fetch syllabus');
@@ -53,7 +59,7 @@ export const useSyllabusForReports = () => {
 
   useEffect(() => {
     fetchSyllabus();
-  }, [user]);
+  }, [user, academicYear]);
 
   const getTotalLessons = (subject: string, className: string): number => {
     const key = `${subject}-${className}`;

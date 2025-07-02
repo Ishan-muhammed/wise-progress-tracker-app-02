@@ -19,7 +19,7 @@ const YearlyReport = () => {
   const { startDate, endDate } = getAcademicYearDateRange(selectedAcademicYear);
   
   const { lessons, loading, error } = useLessonsInDateRange(startDate, endDate);
-  const { syllabusLookup, loading: syllabusLoading, getTotalLessons } = useSyllabusForReports();
+  const { syllabusLookup, loading: syllabusLoading, getTotalLessons } = useSyllabusForReports(selectedAcademicYear);
   
   console.log("Yearly Report - Academic year:", selectedAcademicYear);
   console.log("Yearly Report - Date range:", startDate, "to", endDate);

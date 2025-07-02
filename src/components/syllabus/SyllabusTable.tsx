@@ -10,6 +10,7 @@ const SyllabusTable = ({ syllabus, onEdit, onDelete }: SyllabusTableProps) => {
         <TableRow>
           <TableHead>Subject</TableHead>
           <TableHead>Class</TableHead>
+          <TableHead>Academic Year</TableHead>
           <TableHead>Total Lessons</TableHead>
           <TableHead>Actions</TableHead>
         </TableRow>
@@ -19,6 +20,7 @@ const SyllabusTable = ({ syllabus, onEdit, onDelete }: SyllabusTableProps) => {
           <TableRow key={item.id}>
             <TableCell>{item.subject}</TableCell>
             <TableCell>Class {item.class}</TableCell>
+            <TableCell>{item.academic_year}</TableCell>
             <TableCell>{item.total_lessons}</TableCell>
             <TableCell>
               <div className="flex gap-2">
