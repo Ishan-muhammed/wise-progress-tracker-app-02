@@ -1,17 +1,13 @@
 import { useState, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Dialog } from "@/components/ui/dialog";
 import { useSyllabus, SyllabusItem } from "@/hooks/useSyllabus";
 import { useToast } from "@/hooks/use-toast";
-
-const subjects = ["Aqeedah", "Quran", "Hadith", "Tajweed", "Fiqh", "Arabic"];
-const classes = ["8", "9", "10", "11", "12"];
+import SyllabusHeader from "./syllabus/SyllabusHeader";
+import SyllabusForm from "./syllabus/SyllabusForm";
+import SyllabusTable from "./syllabus/SyllabusTable";
+import SyllabusEmptyState from "./syllabus/SyllabusEmptyState";
+import { SyllabusFormData } from "./syllabus/types";
 
 const SyllabusManagement = () => {
   const { syllabus, loading, error, addSyllabusItem, updateSyllabusItem, deleteSyllabusItem } = useSyllabus();
@@ -19,7 +15,7 @@ const SyllabusManagement = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<SyllabusItem | null>(null);
   const [selectedClass, setSelectedClass] = useState<string>("all");
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<SyllabusFormData>({
     subject: "",
     class: "",
     total_lessons: ""
@@ -125,11 +121,22 @@ const SyllabusManagement = () => {
     }
   };
 
+  const handleCancel = () => {
+    resetForm();
+    setIsAddDialogOpen(false);
+  };
+
   if (loading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Syllabus Management</CardTitle>
+          <SyllabusHeader
+            selectedClass={selectedClass}
+            onClassChange={setSelectedClass}
+            isAddDialogOpen={isAddDialogOpen}
+            setIsAddDialogOpen={setIsAddDialogOpen}
+            onResetForm={resetForm}
+          />
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">Loading syllabus...</div>
@@ -142,7 +149,13 @@ const SyllabusManagement = () => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Syllabus Management</CardTitle>
+          <SyllabusHeader
+            selectedClass={selectedClass}
+            onClassChange={setSelectedClass}
+            isAddDialogOpen={isAddDialogOpen}
+            setIsAddDialogOpen={setIsAddDialogOpen}
+            onResetForm={resetForm}
+          />
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-red-500">Error: {error}</div>
@@ -154,166 +167,40 @@ const SyllabusManagement = () => {
   return (
     <Card>
       <CardHeader>
-        <div className="space-y-4">
-          {/* First row: Title */}
-          <div className="text-center sm:text-left">
-            <CardTitle>Syllabus Management</CardTitle>
-          </div>
-          
-          {/* Second row: Filter and Add button */}
-          <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-end gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Filter by Class:</span>
-              <Select value={selectedClass} onValueChange={setSelectedClass}>
-                <SelectTrigger className="w-40">
-                  <SelectValue>
-                    {selectedClass === "all" ? "All Classes" : `Class ${selectedClass}`}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Classes</SelectItem>
-                  {classes.map(classVal => (
-                    <SelectItem key={classVal} value={classVal}>
-                      Class {classVal}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
-              setIsAddDialogOpen(open);
-              if (!open) resetForm();
-            }}>
-              <DialogTrigger asChild>
-                <Button className="bg-[#039559] hover:bg-[#039559]/90">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Syllabus Item
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingItem ? 'Edit' : 'Add'} Syllabus Item
-                  </DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="subject">Subject</Label>
-                    <Select
-                      value={formData.subject}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, subject: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select subject" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {subjects.map(subject => (
-                          <SelectItem key={subject} value={subject}>
-                            {subject}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="class">Class</Label>
-                    <Select
-                      value={formData.class}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, class: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select class" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {classes.map(cls => (
-                          <SelectItem key={cls} value={cls}>
-                            Class {cls}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="total_lessons">Total Lessons</Label>
-                    <Input
-                      id="total_lessons"
-                      type="number"
-                      min="0"
-                      value={formData.total_lessons}
-                      onChange={(e) => setFormData(prev => ({ ...prev, total_lessons: e.target.value }))}
-                      placeholder="Enter total lessons"
-                    />
-                  </div>
-                  <div className="flex gap-2 pt-4">
-                    <Button type="submit" className="bg-[#039559] hover:bg-[#039559]/90">
-                      {editingItem ? 'Update' : 'Add'}
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={() => {
-                        resetForm();
-                        setIsAddDialogOpen(false);
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
+        <SyllabusHeader
+          selectedClass={selectedClass}
+          onClassChange={setSelectedClass}
+          isAddDialogOpen={isAddDialogOpen}
+          setIsAddDialogOpen={setIsAddDialogOpen}
+          onResetForm={resetForm}
+        />
       </CardHeader>
       <CardContent>
         {filteredSyllabus.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">
-            {selectedClass === "all" 
-              ? "No syllabus items found. Click \"Add Syyllabus Item\" to get started."
-              : `No syllabus items found for Class ${selectedClass}.`
-            }
-          </p>
+          <SyllabusEmptyState selectedClass={selectedClass} />
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Subject</TableHead>
-                <TableHead>Class</TableHead>
-                <TableHead>Total Lessons</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredSyllabus.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.subject}</TableCell>
-                  <TableCell>Class {item.class}</TableCell>
-                  <TableCell>{item.total_lessons}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(item)}
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(item.id)}
-                        className="hover:bg-red-50 hover:border-red-300 hover:text-red-600"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <SyllabusTable
+            syllabus={filteredSyllabus}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
         )}
       </CardContent>
+
+      <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+        setIsAddDialogOpen(open);
+        if (!open) resetForm();
+      }}>
+        <SyllabusForm
+          isOpen={isAddDialogOpen}
+          onOpenChange={setIsAddDialogOpen}
+          editingItem={editingItem}
+          formData={formData}
+          setFormData={setFormData}
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+        />
+      </Dialog>
     </Card>
   );
 };
