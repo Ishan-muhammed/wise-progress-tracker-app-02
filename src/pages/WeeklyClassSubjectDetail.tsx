@@ -62,7 +62,7 @@ const WeeklyClassSubjectDetail = () => {
   return <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
-          <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 bg-[#039559] text-slate-50">
+          <Button variant="ghost" onClick={() => navigate('/admin-dashboard')} className="mb-4 bg-success text-success-foreground hover:bg-success/90">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Weekly Report
           </Button>
@@ -86,7 +86,7 @@ const WeeklyClassSubjectDetail = () => {
               <CardTitle>
                 Lessons for Class {classParam} - {subject}
               </CardTitle>
-              {filteredLessons.length > 0 && <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="bg-[#039559] hover:bg-[#039559]/90">
+              {filteredLessons.length > 0 && <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="bg-success text-success-foreground hover:bg-success/90">
                   <Download className="w-4 h-4 mr-2" />
                   {isGeneratingPDF ? "Generating..." : "Download PDF"}
                 </Button>}
