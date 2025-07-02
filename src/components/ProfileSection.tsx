@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubjects } from "@/hooks/useSubjects";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
-import DeleteAccountDialog from "@/components/DeleteAccountDialog";
+
 
 interface Profile {
   name: string;
@@ -250,24 +250,6 @@ const ProfileSection = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Account Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col space-y-3">
-            <p className="text-sm text-gray-600 mb-3">
-              Manage your account settings and security.
-            </p>
-            <div className="border-t pt-3">
-              <p className="text-sm text-red-600 mb-3">
-                Danger Zone: This action cannot be undone.
-              </p>
-              <DeleteAccountDialog isCurrentUser={true} />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
