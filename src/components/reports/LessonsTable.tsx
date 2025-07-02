@@ -23,6 +23,7 @@ const LessonsTable = ({ lessons, emptyText }: LessonsTableProps) => {
           <TableHead>Teacher</TableHead>
           <TableHead>Class</TableHead>
           <TableHead>Subject</TableHead>
+          <TableHead>Date</TableHead>
           <TableHead>Lesson</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Assessment</TableHead>
@@ -36,6 +37,7 @@ const LessonsTable = ({ lessons, emptyText }: LessonsTableProps) => {
             </TableCell>
             <TableCell>Class {lesson.class}</TableCell>
             <TableCell>{lesson.subject}</TableCell>
+            <TableCell>{new Date(lesson.date).toLocaleDateString()}</TableCell>
             <TableCell>{lesson.lesson_number}</TableCell>
             <TableCell>
               <span className={`px-2 py-1 rounded text-xs ${
