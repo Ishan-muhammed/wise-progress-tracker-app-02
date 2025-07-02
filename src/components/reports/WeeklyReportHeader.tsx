@@ -28,9 +28,16 @@ const WeeklyReportHeader = ({
   });
 
   return (
-    <div className="flex items-center justify-between">
-      <span>Weekly Report - {weekStart.toLocaleDateString()} to {weekEnd.toLocaleDateString()}</span>
-      <div className="flex items-center gap-4">
+    <div className="space-y-4">
+      {/* First row: Title and date range */}
+      <div className="text-center sm:text-left">
+        <span className="text-lg font-medium">
+          Weekly Report - {weekStart.toLocaleDateString()} to {weekEnd.toLocaleDateString()}
+        </span>
+      </div>
+      
+      {/* Second row: Class selector and Date picker */}
+      <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-end gap-4">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">Class:</span>
           <Select value={selectedClass} onValueChange={onClassChange}>
