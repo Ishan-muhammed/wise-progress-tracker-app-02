@@ -30,16 +30,8 @@ const WeeklyReport = () => {
 
   const { lessons, loading, error } = useLessonsInDateRange(weekStartStr, weekEndStr);
 
-  // Get unique classes from lessons and sort them - memoized
-  const allClasses = useMemo(() => {
-    const classSet = new Set<string>();
-    lessons.forEach((lesson) => classSet.add(String(lesson.class)));
-    return Array.from(classSet).sort((a: string, b: string) => {
-      const numA = parseInt(a);
-      const numB = parseInt(b);
-      return numA - numB;
-    });
-  }, [lessons]);
+  // Static array of all available classes (8-12)
+  const allClasses = ["8", "9", "10", "11", "12"];
 
   // Filter by class if a specific class is selected - memoized
   const filteredLessons = useMemo(() => {
