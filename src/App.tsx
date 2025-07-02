@@ -11,6 +11,7 @@ import Auth from "./pages/Auth";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import TeacherProfile from "./pages/TeacherProfile";
+import TeacherCompletedLessons from "./pages/TeacherCompletedLessons";
 import WeeklyClassSubjectDetail from "./pages/WeeklyClassSubjectDetail";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
@@ -49,6 +50,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRoles={['admin']}>
                   <TeacherProfile />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/teacher-completed-lessons/:teacherId" 
+              element={
+                <ProtectedRoute requiredRoles={['admin']}>
+                  <TeacherCompletedLessons />
                 </ProtectedRoute>
               } 
             />

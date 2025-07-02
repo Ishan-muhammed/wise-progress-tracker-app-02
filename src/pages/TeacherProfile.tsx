@@ -22,7 +22,8 @@ const TeacherProfile = () => {
     { 
       weeklyStartDate, 
       monthlyStartDate,
-      useSampleData: true 
+      useSampleData: true,
+      includeArchived: true
     }
   );
 
@@ -150,7 +151,10 @@ const TeacherProfile = () => {
           </Card>
 
           {/* Completed Lessons Panel */}
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-shadow duration-200" 
+            onClick={() => navigate(`/teacher-completed-lessons/${teacherId}`)}
+          >
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center">
                 <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
@@ -168,6 +172,9 @@ const TeacherProfile = () => {
                   <span className="font-medium">{completionRate}%</span>
                 </div>
                 <Progress value={completionRate} className="h-2" />
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-gray-500 mt-2">Click to view details</p>
               </div>
             </CardContent>
           </Card>

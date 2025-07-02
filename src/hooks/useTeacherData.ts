@@ -23,10 +23,12 @@ interface UseTeacherDataOptions {
   weeklyStartDate?: Date;
   monthlyStartDate?: Date;
   useSampleData?: boolean;
+  includeArchived?: boolean;
 }
 
 export const useTeacherData = (teacherId: string, options: UseTeacherDataOptions = {}) => {
-  const { profiles } = useTeacherProfiles();
+  const { profiles: activeProfiles } = useTeacherProfiles({ statusFilter: 'active' });
+  const { profiles: archivedProfiles } = useTeacherProfiles({ statusFilter: 'archived' });
   const { lessons, loading: lessonsLoading } = useLessons();
   const [teacherData, setTeacherData] = useState<TeacherData>({
     teacher: null,
@@ -39,15 +41,25 @@ export const useTeacherData = (teacherId: string, options: UseTeacherDataOptions
   });
   const [loading, setLoading] = useState(true);
 
-  const { weeklyStartDate, monthlyStartDate, useSampleData = false } = options;
+  const { weeklyStartDate, monthlyStartDate, useSampleData = false, includeArchived = false } = options;
 
   const processTeacherData = useCallback(() => {
-    if (!teacherId || profiles.length === 0 || lessons.length === 0) {
+    if (!teacherId || lessons.length === 0) {
       setLoading(false);
       return;
     }
 
-    const teacher = profiles.find(p => p.id === teacherId);
+    // Combine active and archived profiles if needed
+    const allProfiles = includeArchived 
+      ? [...activeProfiles, ...archivedProfiles]
+      : activeProfiles;
+
+    if (allProfiles.length === 0) {
+      setLoading(false);
+      return;
+    }
+
+    const teacher = allProfiles.find(p => p.id === teacherId);
     const teacherLessons = lessons.filter(lesson => lesson.user_id === teacherId);
     const completedLessons = teacherLessons.filter(lesson => lesson.completed);
 
@@ -154,7 +166,7 @@ export const useTeacherData = (teacherId: string, options: UseTeacherDataOptions
     });
     
     setLoading(false);
-  }, [teacherId, profiles, lessons, weeklyStartDate, monthlyStartDate, useSampleData]);
+  }, [teacherId, activeProfiles, archivedProfiles, lessons, weeklyStartDate, monthlyStartDate, useSampleData, includeArchived]);
 
   useEffect(() => {
     processTeacherData();
