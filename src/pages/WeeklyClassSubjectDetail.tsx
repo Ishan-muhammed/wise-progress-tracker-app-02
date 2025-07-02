@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,27 +7,30 @@ import { useLessonsInDateRange } from "@/hooks/useLessonsInDateRange";
 import { generateTablePDF } from "@/utils/pdfUtils";
 import { useToast } from "@/hooks/use-toast";
 import LessonsTable from "@/components/reports/LessonsTable";
-
 const WeeklyClassSubjectDetail = () => {
-  const { class: classParam, subject, teacher, weekStart, weekEnd } = useParams();
+  const {
+    class: classParam,
+    subject,
+    teacher,
+    weekStart,
+    weekEnd
+  } = useParams();
   const navigate = useNavigate();
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
-
-  const { lessons, loading, error } = useLessonsInDateRange(weekStart!, weekEnd!);
+  const {
+    toast
+  } = useToast();
+  const {
+    lessons,
+    loading,
+    error
+  } = useLessonsInDateRange(weekStart!, weekEnd!);
 
   // Filter lessons for the specific class, subject, and teacher
-  const filteredLessons = lessons.filter(
-    (lesson) =>
-      lesson.class === classParam &&
-      lesson.subject === subject &&
-      lesson.profiles?.name === decodeURIComponent(teacher!)
-  );
-
+  const filteredLessons = lessons.filter(lesson => lesson.class === classParam && lesson.subject === subject && lesson.profiles?.name === decodeURIComponent(teacher!));
   const weekStartDate = new Date(weekStart!);
   const weekEndDate = new Date(weekEnd!);
-
   const handleDownloadPDF = async () => {
     if (!reportRef.current || filteredLessons.length === 0) {
       toast({
@@ -38,14 +40,11 @@ const WeeklyClassSubjectDetail = () => {
       });
       return;
     }
-
     setIsGeneratingPDF(true);
     try {
       const filename = `lesson-details-${classParam}-${subject}-${weekStart}-to-${weekEnd}.pdf`;
       const title = `Lesson Details - Class ${classParam} - ${subject} (${weekStartDate.toLocaleDateString()} - ${weekEndDate.toLocaleDateString()})`;
-      
       await generateTablePDF(reportRef.current, filename, title);
-      
       toast({
         title: "Success",
         description: "PDF downloaded successfully"
@@ -60,16 +59,10 @@ const WeeklyClassSubjectDetail = () => {
       setIsGeneratingPDF(false);
     }
   };
-
-  return (
-    <div className="min-h-screen bg-gray-50 p-6">
+  return <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(-1)}
-            className="mb-4"
-          >
+          <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 bg-[#039559] text-slate-50">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Weekly Report
           </Button>
@@ -93,36 +86,19 @@ const WeeklyClassSubjectDetail = () => {
               <CardTitle>
                 Lessons for Class {classParam} - {subject}
               </CardTitle>
-              {filteredLessons.length > 0 && (
-                <Button 
-                  onClick={handleDownloadPDF}
-                  disabled={isGeneratingPDF}
-                  className="bg-[#039559] hover:bg-[#039559]/90"
-                >
+              {filteredLessons.length > 0 && <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="bg-[#039559] hover:bg-[#039559]/90">
                   <Download className="w-4 h-4 mr-2" />
                   {isGeneratingPDF ? "Generating..." : "Download PDF"}
-                </Button>
-              )}
+                </Button>}
             </div>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="text-center py-8">Loading lessons...</div>
-            ) : error ? (
-              <div className="text-center py-8 text-red-500">Error: {error}</div>
-            ) : (
-              <div ref={reportRef}>
-                <LessonsTable 
-                  lessons={filteredLessons}
-                  emptyText={`No lessons found for Class ${classParam} - ${subject} during this week.`}
-                />
-              </div>
-            )}
+            {loading ? <div className="text-center py-8">Loading lessons...</div> : error ? <div className="text-center py-8 text-red-500">Error: {error}</div> : <div ref={reportRef}>
+                <LessonsTable lessons={filteredLessons} emptyText={`No lessons found for Class ${classParam} - ${subject} during this week.`} />
+              </div>}
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default WeeklyClassSubjectDetail;
