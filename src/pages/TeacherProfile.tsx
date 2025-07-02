@@ -10,49 +10,47 @@ import TeacherWeeklyChart from "@/components/teacher-profile/TeacherWeeklyChart"
 import TeacherMonthlyChart from "@/components/teacher-profile/TeacherMonthlyChart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
-
 const TeacherProfile = () => {
-  const { teacherId } = useParams<{ teacherId: string }>();
+  const {
+    teacherId
+  } = useParams<{
+    teacherId: string;
+  }>();
   const navigate = useNavigate();
   const [weeklyStartDate, setWeeklyStartDate] = useState<Date>(new Date());
   const [monthlyStartDate, setMonthlyStartDate] = useState<Date>(new Date());
-  
-  const { teacher, totalLessons, completedLessons, completionRate, weeklyData, monthlyData, loading } = useTeacherData(
-    teacherId || '', 
-    { 
-      weeklyStartDate, 
-      monthlyStartDate,
-      useSampleData: true,
-      includeArchived: true
-    }
-  );
-
+  const {
+    teacher,
+    totalLessons,
+    completedLessons,
+    completionRate,
+    weeklyData,
+    monthlyData,
+    loading
+  } = useTeacherData(teacherId || '', {
+    weeklyStartDate,
+    monthlyStartDate,
+    useSampleData: true,
+    includeArchived: true
+  });
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
+    return <div className="min-h-screen bg-gray-50">
         <Header />
         <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           <div className="space-y-6">
             <Skeleton className="h-8 w-64" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[...Array(3)].map((_, i) => (
-                <Skeleton key={i} className="h-32 w-full" />
-              ))}
+              {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-32 w-full" />)}
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {[...Array(2)].map((_, i) => (
-                <Skeleton key={i} className="h-64 w-full" />
-              ))}
+              {[...Array(2)].map((_, i) => <Skeleton key={i} className="h-64 w-full" />)}
             </div>
           </div>
         </main>
-      </div>
-    );
+      </div>;
   }
-
   if (!teacher) {
-    return (
-      <div className="min-h-screen bg-gray-50">
+    return <div className="min-h-screen bg-gray-50">
         <Header />
         <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           <div className="text-center py-12">
@@ -64,21 +62,15 @@ const TeacherProfile = () => {
             </Button>
           </div>
         </main>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-gray-50">
+  return <div className="min-h-screen bg-gray-50">
       <Header />
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Navigation Breadcrumb */}
         <div className="mb-6">
           <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
-            <button 
-              onClick={() => navigate('/admin-dashboard')}
-              className="hover:text-gray-900 transition-colors"
-            >
+            <button onClick={() => navigate('/admin-dashboard')} className="hover:text-gray-900 transition-colors">
               Admin Dashboard
             </button>
             <span>›</span>
@@ -97,11 +89,7 @@ const TeacherProfile = () => {
                 <p className="text-gray-600">{teacher.email}</p>
               </div>
             </div>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/admin-dashboard')}
-              className="flex items-center"
-            >
+            <Button variant="outline" onClick={() => navigate('/admin-dashboard')} className="flex items-center bg-[#039559] text-slate-50">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
@@ -151,10 +139,7 @@ const TeacherProfile = () => {
           </Card>
 
           {/* Completed Lessons Panel */}
-          <Card 
-            className="cursor-pointer hover:shadow-lg transition-shadow duration-200" 
-            onClick={() => navigate(`/teacher-completed-lessons/${teacherId}`)}
-          >
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow duration-200" onClick={() => navigate(`/teacher-completed-lessons/${teacherId}`)}>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center">
                 <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
@@ -191,10 +176,7 @@ const TeacherProfile = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <TeacherWeeklyChart 
-                data={weeklyData} 
-                onDateRangeChange={setWeeklyStartDate}
-              />
+              <TeacherWeeklyChart data={weeklyData} onDateRangeChange={setWeeklyStartDate} />
             </CardContent>
           </Card>
 
@@ -207,16 +189,11 @@ const TeacherProfile = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <TeacherMonthlyChart 
-                data={monthlyData} 
-                onDateRangeChange={setMonthlyStartDate}
-              />
+              <TeacherMonthlyChart data={monthlyData} onDateRangeChange={setMonthlyStartDate} />
             </CardContent>
           </Card>
         </div>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default TeacherProfile;
