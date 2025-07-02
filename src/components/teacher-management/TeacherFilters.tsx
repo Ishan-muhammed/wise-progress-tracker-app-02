@@ -3,8 +3,8 @@ import { Label } from "@/components/ui/label";
 import { generateAcademicYears, getCurrentAcademicYear } from "@/utils/academicYearUtils";
 
 interface TeacherFiltersProps {
-  statusFilter: 'all' | 'active' | 'archived';
-  onStatusFilterChange: (status: 'all' | 'active' | 'archived') => void;
+  statusFilter: 'active' | 'archived';
+  onStatusFilterChange: (status: 'active' | 'archived') => void;
   academicYear: string;
   onAcademicYearChange: (year: string) => void;
 }
@@ -28,9 +28,8 @@ const TeacherFilters = ({
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Teachers</SelectItem>
-            <SelectItem value="active">Active Only</SelectItem>
-            <SelectItem value="archived">Archived Only</SelectItem>
+            <SelectItem value="active">Active Teachers</SelectItem>
+            <SelectItem value="archived">Archived Teachers</SelectItem>
           </SelectContent>
         </Select>
       </div>

@@ -15,7 +15,7 @@ interface TeacherProfile {
 }
 
 export interface TeacherProfilesOptions {
-  statusFilter?: 'all' | 'active' | 'archived';
+  statusFilter?: 'active' | 'archived';
   academicYear?: string;
 }
 
@@ -26,7 +26,7 @@ export const useTeacherProfiles = (options: TeacherProfilesOptions = {}) => {
   const abortControllerRef = useRef<AbortController | null>(null);
   const isUnmountedRef = useRef(false);
   
-  const { statusFilter = 'all', academicYear } = options;
+  const { statusFilter = 'active', academicYear } = options;
 
   // Cleanup on unmount
   useEffect(() => {
@@ -96,9 +96,7 @@ export const useTeacherProfiles = (options: TeacherProfilesOptions = {}) => {
         .in('id', teacherIds);
 
       // Apply status filter
-      if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
-      }
+      query = query.eq('status', statusFilter);
 
       const { data, error } = await query;
 

@@ -39,7 +39,7 @@ export const useTeacherData = (teacherId: string, options: UseTeacherDataOptions
   });
   const [loading, setLoading] = useState(true);
 
-  const { weeklyStartDate, monthlyStartDate, useSampleData = true } = options;
+  const { weeklyStartDate, monthlyStartDate, useSampleData = false } = options;
 
   const processTeacherData = useCallback(() => {
     if (!teacherId || profiles.length === 0 || lessons.length === 0) {

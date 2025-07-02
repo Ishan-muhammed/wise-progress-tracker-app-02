@@ -12,7 +12,7 @@ import TeacherDirectory from "./teacher-management/TeacherDirectory";
 import TeacherFilters from "./teacher-management/TeacherFilters";
 
 const TeacherManagement = () => {
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'archived'>('all');
+  const [statusFilter, setStatusFilter] = useState<'active' | 'archived'>('active');
   const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   
@@ -67,14 +67,25 @@ const TeacherManagement = () => {
     );
   }
 
-  // Filter lessons by academic year if needed
-  const filteredLessons = lessons; // You can add academic year filtering here if needed
+  // Filter lessons by academic year
+  const filteredLessons = lessons.filter(lesson => {
+    const lessonDate = new Date(lesson.date);
+    const lessonYear = lessonDate.getFullYear();
+    const [startYear] = academicYear.split('/').map(y => parseInt(y));
+    return lessonYear === startYear || lessonYear === startYear + 1;
+  });
   
-  // Calculate statistics
-  const totalSubjects = [...new Set(filteredLessons.map(lesson => lesson.subject))].length;
-  const totalClasses = [...new Set(filteredLessons.map(lesson => lesson.class))].length;
+  // Only count active teachers for statistics
+  const activeTeachers = teachers.filter(teacher => teacher.status === 'active');
+  
+  // Calculate statistics based on active teachers only
+  const activeTeacherIds = activeTeachers.map(t => t.id);
+  const activeTeacherLessons = filteredLessons.filter(lesson => activeTeacherIds.includes(lesson.user_id));
+  
+  const totalSubjects = [...new Set(activeTeacherLessons.map(lesson => lesson.subject))].length;
+  const totalClasses = [...new Set(activeTeacherLessons.map(lesson => lesson.class))].length;
 
-  // Calculate teacher statistics for completion rate
+  // Calculate teacher statistics for completion rate (all teachers for display)
   const teacherStats = teachers.map(teacher => {
     const teacherLessons = filteredLessons.filter(lesson => lesson.user_id === teacher.id);
     const completedLessons = teacherLessons.filter(lesson => lesson.completed);
@@ -97,8 +108,10 @@ const TeacherManagement = () => {
     };
   });
 
-  const avgCompletionRate = teacherStats.length > 0 ? 
-    Math.round(teacherStats.reduce((acc, t) => acc + t.completionRate, 0) / teacherStats.length) : 0;
+  // Calculate average completion rate only for active teachers
+  const activeTeacherStats = teacherStats.filter(t => t.status === 'active');
+  const avgCompletionRate = activeTeacherStats.length > 0 ? 
+    Math.round(activeTeacherStats.reduce((acc, t) => acc + t.completionRate, 0) / activeTeacherStats.length) : 0;
 
   return (
     <div className="space-y-6">
@@ -123,7 +136,7 @@ const TeacherManagement = () => {
 
       {/* Statistics Cards */}
       <TeacherStatistics
-        totalTeachers={teachers.length}
+        totalTeachers={activeTeachers.length}
         totalSubjects={totalSubjects}
         totalClasses={totalClasses}
         avgCompletionRate={avgCompletionRate}
