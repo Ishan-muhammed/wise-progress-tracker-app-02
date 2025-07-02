@@ -18,7 +18,7 @@ interface TeacherCardProps {
     age: number | null;
     subjects: string[];
     classes: string[];
-    status: 'active' | 'inactive' | 'archived';
+    status: 'active' | 'archived';
     last_active_at?: string | null;
   };
   onTeacherDeleted?: () => void;

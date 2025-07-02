@@ -12,7 +12,7 @@ import TeacherDirectory from "./teacher-management/TeacherDirectory";
 import TeacherFilters from "./teacher-management/TeacherFilters";
 
 const TeacherManagement = () => {
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'archived'>('active');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'archived'>('all');
   const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   

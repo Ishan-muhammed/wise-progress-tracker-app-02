@@ -8,14 +8,14 @@ interface TeacherProfile {
   email: string;
   gender: string | null;
   age: number | null;
-  status: 'active' | 'inactive' | 'archived';
+  status: 'active' | 'archived';
   archived_at: string | null;
   archived_by: string | null;
   last_active_at: string | null;
 }
 
 export interface TeacherProfilesOptions {
-  statusFilter?: 'all' | 'active' | 'inactive' | 'archived';
+  statusFilter?: 'all' | 'active' | 'archived';
   academicYear?: string;
 }
 
@@ -26,7 +26,7 @@ export const useTeacherProfiles = (options: TeacherProfilesOptions = {}) => {
   const abortControllerRef = useRef<AbortController | null>(null);
   const isUnmountedRef = useRef(false);
   
-  const { statusFilter = 'active', academicYear } = options;
+  const { statusFilter = 'all', academicYear } = options;
 
   // Cleanup on unmount
   useEffect(() => {

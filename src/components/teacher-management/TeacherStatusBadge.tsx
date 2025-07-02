@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, Archive, CheckCircle } from "lucide-react";
 
 interface TeacherStatusBadgeProps {
-  status: 'active' | 'inactive' | 'archived';
+  status: 'active' | 'archived';
   lastActiveAt?: string | null;
   className?: string;
 }
@@ -16,13 +16,6 @@ const TeacherStatusBadge = ({ status, lastActiveAt, className }: TeacherStatusBa
           icon: CheckCircle,
           text: 'Active',
           className: 'bg-green-100 text-green-800 hover:bg-green-100'
-        };
-      case 'inactive':
-        return {
-          variant: 'secondary' as const,
-          icon: Clock,
-          text: 'Inactive',
-          className: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'
         };
       case 'archived':
         return {

@@ -19,7 +19,7 @@ interface TeacherArchiveDialogProps {
   teacher: {
     id: string;
     name: string;
-    status: 'active' | 'inactive' | 'archived';
+    status: 'active' | 'archived';
   };
   isOpen: boolean;
   onClose: () => void;
