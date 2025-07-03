@@ -23,7 +23,7 @@ export const generateMobilePDF = (
   
   // Headers
   const headers = ['Teacher', 'Class', 'Subject', 'Date', 'Lesson', 'Status', 'Assessment'];
-  const colWidths = [35, 25, 30, 30, 20, 25, 110];
+  const colWidths = [35, 25, 30, 30, 35, 35, 95];
   let yPosition = 35;
   
   // Draw headers
@@ -42,7 +42,7 @@ export const generateMobilePDF = (
   
   // Data rows
   pdf.setFont(undefined, 'normal');
-  pdf.setFontSize(10);
+  pdf.setFontSize(14);
   
   lessons.forEach((lesson) => {
     if (yPosition > 190) { // Page break
@@ -61,14 +61,14 @@ export const generateMobilePDF = (
       pdf.line(20, yPosition, 275, yPosition);
       yPosition += 10;
       pdf.setFont(undefined, 'normal');
-      pdf.setFontSize(10);
+      pdf.setFontSize(14);
     }
     
     const rowData = [
       lesson.profiles?.name || 'Unknown Teacher',
       `Class ${lesson.class}`,
       lesson.subject,
-      new Date(lesson.date).toLocaleDateString(),
+      lesson.date, // Use the date directly from table without re-parsing
       lesson.lesson_number,
       lesson.completed ? 'Completed' : 'In Progress',
       lesson.assessment || '-'
@@ -86,7 +86,7 @@ export const generateMobilePDF = (
       xPosition += colWidths[index];
     });
     
-    yPosition += 15;
+    yPosition += 18;
   });
   
   pdf.save(filename);
