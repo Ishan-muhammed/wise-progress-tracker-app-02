@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarTrigger } from "@/components/ui/menubar";
+import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarTrigger } from "@/components/ui/menubar";
 import { Menu } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -23,8 +23,8 @@ const Header = () => {
   const [logoError, setLogoError] = useState<boolean>(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  // Always show Switch Dashboard if the user has more than 1 role
-  const showMenu = roles.length > 1;
+  // Always show menu (contains logout and dashboard switching)
+  const showMenu = true;
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -133,7 +133,7 @@ const Header = () => {
                 <MenubarMenu>
                   <MenubarTrigger className="cursor-pointer flex items-center">
                     <Menu className="h-4 w-4" />
-                    <span className="ml-2 hidden sm:inline">Switch Dashboard</span>
+                    <span className="ml-2 hidden sm:inline">Menu</span>
                   </MenubarTrigger>
                   <MenubarContent>
                     {roles.includes("teacher") && (
@@ -146,19 +146,14 @@ const Header = () => {
                         Admin Dashboard
                       </MenubarItem>
                     )}
+                    {roles.length > 0 && <MenubarSeparator />}
+                    <MenubarItem onClick={handleLogout} disabled={isLoggingOut}>
+                      {isLoggingOut ? "Logging out..." : "Logout"}
+                    </MenubarItem>
                   </MenubarContent>
                 </MenubarMenu>
               </Menubar>
             )}
-            <Button 
-              variant="outline" 
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              className="text-sm px-3 sm:px-4"
-            >
-              <span className="hidden sm:inline">{isLoggingOut ? "Logging out..." : "Logout"}</span>
-              <span className="sm:hidden">{isLoggingOut ? "..." : "Out"}</span>
-            </Button>
           </div>
         </div>
       </div>
