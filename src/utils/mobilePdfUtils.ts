@@ -18,16 +18,16 @@ export const generateMobilePDF = (
   const pdf = new jsPDF('landscape', 'mm', 'a4');
   
   // Title
-  pdf.setFontSize(14);
+  pdf.setFontSize(18);
   pdf.text(title, 20, 20);
   
   // Headers
-  const headers = ['Date', 'Class', 'Subject', 'Lesson', 'Status', 'Assessment'];
-  const colWidths = [35, 25, 35, 25, 25, 130];
+  const headers = ['Teacher', 'Class', 'Subject', 'Date', 'Lesson', 'Status', 'Assessment'];
+  const colWidths = [35, 25, 30, 30, 20, 25, 110];
   let yPosition = 35;
   
   // Draw headers
-  pdf.setFontSize(10);
+  pdf.setFontSize(12);
   pdf.setFont(undefined, 'bold');
   let xPosition = 20;
   headers.forEach((header, index) => {
@@ -38,11 +38,11 @@ export const generateMobilePDF = (
   // Draw header line
   yPosition += 5;
   pdf.line(20, yPosition, 275, yPosition);
-  yPosition += 8;
+  yPosition += 10;
   
   // Data rows
   pdf.setFont(undefined, 'normal');
-  pdf.setFontSize(8);
+  pdf.setFontSize(10);
   
   lessons.forEach((lesson) => {
     if (yPosition > 190) { // Page break
@@ -51,7 +51,7 @@ export const generateMobilePDF = (
       
       // Redraw headers on new page
       pdf.setFont(undefined, 'bold');
-      pdf.setFontSize(10);
+      pdf.setFontSize(12);
       let headerX = 20;
       headers.forEach((header, index) => {
         pdf.text(header, headerX, yPosition);
@@ -59,24 +59,25 @@ export const generateMobilePDF = (
       });
       yPosition += 5;
       pdf.line(20, yPosition, 275, yPosition);
-      yPosition += 8;
+      yPosition += 10;
       pdf.setFont(undefined, 'normal');
-      pdf.setFontSize(8);
+      pdf.setFontSize(10);
     }
     
     const rowData = [
-      new Date(lesson.date).toLocaleDateString(),
-      lesson.class,
+      lesson.profiles?.name || 'Unknown Teacher',
+      `Class ${lesson.class}`,
       lesson.subject,
+      new Date(lesson.date).toLocaleDateString(),
       lesson.lesson_number,
-      lesson.completed ? 'Completed' : 'Pending',
+      lesson.completed ? 'Completed' : 'In Progress',
       lesson.assessment || '-'
     ];
     
     xPosition = 20;
     rowData.forEach((data, index) => {
       const text = String(data);
-      if (index === 5) { // Assessment column - wrap text
+      if (index === 6) { // Assessment column - wrap text
         const lines = pdf.splitTextToSize(text, colWidths[index] - 5);
         pdf.text(lines, xPosition, yPosition);
       } else {
@@ -85,7 +86,7 @@ export const generateMobilePDF = (
       xPosition += colWidths[index];
     });
     
-    yPosition += 12;
+    yPosition += 15;
   });
   
   pdf.save(filename);
@@ -154,15 +155,15 @@ const extractLessonDataFromTable = (tableElement: HTMLElement): LessonData[] => 
   
   rows.forEach((row) => {
     const cells = row.querySelectorAll('td');
-    if (cells.length >= 6) {
+    if (cells.length >= 7) {
       lessons.push({
-        date: cells[0]?.textContent?.trim() || '',
-        class: cells[1]?.textContent?.trim() || '',
+        profiles: { name: cells[0]?.textContent?.trim() || 'Unknown Teacher' },
+        class: cells[1]?.textContent?.trim().replace('Class ', '') || '',
         subject: cells[2]?.textContent?.trim() || '',
-        lesson_number: cells[3]?.textContent?.trim() || '',
-        completed: cells[4]?.textContent?.trim() === 'Completed',
-        assessment: cells[5]?.textContent?.trim() || null,
-        profiles: { name: '' }
+        date: cells[3]?.textContent?.trim() || '',
+        lesson_number: cells[4]?.textContent?.trim() || '',
+        completed: cells[5]?.textContent?.trim() === 'Completed',
+        assessment: cells[6]?.textContent?.trim() || null
       });
     }
   });
