@@ -7,9 +7,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 interface SubjectSelectorProps {
   subjects: string[];
   setSubjects: (subjects: string[]) => void;
+  roles?: string[];
 }
 
-export const SubjectSelector = ({ subjects, setSubjects }: SubjectSelectorProps) => {
+export const SubjectSelector = ({ subjects, setSubjects, roles = [] }: SubjectSelectorProps) => {
   const { subjects: availableSubjects, loading, error } = useSubjects();
 
   const handleSubjectChange = (subject: string, checked: boolean) => {
@@ -20,11 +21,13 @@ export const SubjectSelector = ({ subjects, setSubjects }: SubjectSelectorProps)
     }
   };
 
+  const isTeacherRole = roles.includes("teacher");
+  
   console.log('SubjectSelector - Available subjects:', availableSubjects.length, 'Loading:', loading, 'Error:', error);
 
   return (
     <div className="space-y-2">
-      <Label>Teaching Subjects *</Label>
+      <Label>Teaching Subjects {isTeacherRole ? "*" : "(Optional)"}</Label>
       {loading && (
         <div className="text-sm text-gray-500 p-2 border rounded">
           Loading subjects...

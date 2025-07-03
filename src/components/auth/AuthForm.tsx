@@ -88,7 +88,7 @@ export const AuthForm = ({
       });
       return;
     }
-    if (!isLogin && subjects.length === 0) {
+    if (!isLogin && roles.includes("teacher") && subjects.length === 0) {
       toast({
         title: "Subjects Required",
         description: "Please select at least one subject you teach.",
@@ -195,7 +195,7 @@ export const AuthForm = ({
             <Input id="age" type="number" placeholder="Enter your age" min="1" max="150" value={age} onChange={e => setAge(e.target.value)} required />
           </div>
           <RoleSelector roles={roles} setRoles={setRoles} />
-          <SubjectSelector subjects={subjects} setSubjects={setSubjects} />
+          <SubjectSelector subjects={subjects} setSubjects={setSubjects} roles={roles} />
         </>}
       <div className="space-y-2">
         <Label htmlFor="email">Email *</Label>
