@@ -4,19 +4,22 @@ import { normalizeDateString } from "@/utils/dateUtils";
 
 export const useDataCleanup = () => {
   useEffect(() => {
+    // Clean initialization - remove any old demo data
     const lessons = JSON.parse(localStorage.getItem("lessonCompletions") || "[]");
-    const cutoffDate = "2025-06-11";
     
-    const filteredLessons = lessons.filter((lesson: any) => {
-      if (!lesson.date) return false;
-      
-      const normalizedDate = normalizeDateString(lesson.date);
-      return normalizedDate >= cutoffDate;
+    // Remove any lessons with invalid or demo-like data
+    const validLessons = lessons.filter((lesson: any) => {
+      // Keep only lessons with proper structure and valid dates
+      return lesson.date && 
+             lesson.class && 
+             lesson.subject && 
+             lesson.user_id && 
+             !lesson.teacherId; // Remove old demo data format
     });
     
-    // Only update if we actually removed some lessons
-    if (filteredLessons.length !== lessons.length) {
-      localStorage.setItem("lessonCompletions", JSON.stringify(filteredLessons));
+    // Update if we removed invalid lessons
+    if (validLessons.length !== lessons.length) {
+      localStorage.setItem("lessonCompletions", JSON.stringify(validLessons));
     }
   }, []);
 };

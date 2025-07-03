@@ -30,7 +30,6 @@ const TeacherProfile = () => {
   } = useTeacherData(teacherId || '', {
     weeklyStartDate,
     monthlyStartDate,
-    useSampleData: true,
     includeArchived: true
   });
   if (loading) {

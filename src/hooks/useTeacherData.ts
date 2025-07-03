@@ -22,7 +22,6 @@ interface TeacherData {
 interface UseTeacherDataOptions {
   weeklyStartDate?: Date;
   monthlyStartDate?: Date;
-  useSampleData?: boolean;
   includeArchived?: boolean;
 }
 
@@ -41,7 +40,7 @@ export const useTeacherData = (teacherId: string, options: UseTeacherDataOptions
   });
   const [loading, setLoading] = useState(true);
 
-  const { weeklyStartDate, monthlyStartDate, useSampleData = false, includeArchived = false } = options;
+  const { weeklyStartDate, monthlyStartDate, includeArchived = false } = options;
 
   const processTeacherData = useCallback(() => {
     if (!teacherId || lessons.length === 0) {
@@ -81,23 +80,6 @@ export const useTeacherData = (teacherId: string, options: UseTeacherDataOptions
       weekData.total++;
     });
 
-    // Generate sample/fill weekly data if needed
-    if (useSampleData) {
-      const sampleWeeks = 8;
-      for (let i = sampleWeeks - 1; i >= 0; i--) {
-        const weekStart = new Date(baseWeekDate);
-        weekStart.setDate(baseWeekDate.getDate() - (baseWeekDate.getDay() + i * 7));
-        const weekKey = weekStart.toISOString().split('T')[0];
-        
-        if (!weeklyMap.has(weekKey)) {
-          const sampleTotal = Math.floor(Math.random() * 15) + 5;
-          weeklyMap.set(weekKey, { 
-            total: sampleTotal, 
-            dateObj: weekStart 
-          });
-        }
-      }
-    }
 
     const weeklyData = Array.from(weeklyMap.entries())
       .map(([weekKey, data]) => ({
@@ -128,22 +110,6 @@ export const useTeacherData = (teacherId: string, options: UseTeacherDataOptions
       monthData.total++;
     });
 
-    // Generate sample/fill monthly data if needed
-    if (useSampleData) {
-      const sampleMonths = 6;
-      for (let i = sampleMonths - 1; i >= 0; i--) {
-        const monthDate = new Date(baseMonthDate.getFullYear(), baseMonthDate.getMonth() - i, 1);
-        const monthKey = `${monthDate.getFullYear()}-${monthDate.getMonth()}`;
-        
-        if (!monthlyMap.has(monthKey)) {
-          const sampleTotal = Math.floor(Math.random() * 40) + 20;
-          monthlyMap.set(monthKey, { 
-            total: sampleTotal, 
-            dateObj: monthDate 
-          });
-        }
-      }
-    }
 
     const monthlyData = Array.from(monthlyMap.entries())
       .map(([monthKey, data]) => ({
@@ -166,7 +132,7 @@ export const useTeacherData = (teacherId: string, options: UseTeacherDataOptions
     });
     
     setLoading(false);
-  }, [teacherId, activeProfiles, archivedProfiles, lessons, weeklyStartDate, monthlyStartDate, useSampleData, includeArchived]);
+  }, [teacherId, activeProfiles, archivedProfiles, lessons, weeklyStartDate, monthlyStartDate, includeArchived]);
 
   useEffect(() => {
     processTeacherData();
