@@ -1,6 +1,7 @@
 
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { generateMobileTablePDF } from './mobilePdfUtils';
 
 export const generateTablePDF = async (
   tableElement: HTMLElement,
@@ -8,6 +9,14 @@ export const generateTablePDF = async (
   title: string
 ) => {
   try {
+    // Check if mobile and use mobile-optimized PDF generation
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile) {
+      await generateMobileTablePDF(tableElement, filename, title);
+      return;
+    }
+    
     const canvas = await html2canvas(tableElement, {
       scale: 2,
       useCORS: true,
