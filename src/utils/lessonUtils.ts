@@ -1,4 +1,3 @@
-
 import { Lesson } from '@/types/lesson';
 
 // Cache for profile data to avoid repeated fetches
@@ -41,39 +40,39 @@ export async function fetchLessonProfiles(userIds: string[], signal?: AbortSigna
     return cachedProfiles;
   }
 
-  try {
-    const { data: profilesData, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id, name')
-      .in('id', uncachedUserIds);
-
+  const profileMap: Record<string, { name?: string }> = { ...cachedProfiles };
+  
+  // Fetch profiles individually to handle missing records gracefully
+  for (const userId of uncachedUserIds) {
     if (signal?.aborted) return null;
-
-    if (profilesError) {
-      console.error('Error fetching profile names:', profilesError);
-      return cachedProfiles; // Return cached data even if fetch fails
-    }
-
-    const profileMap: Record<string, { name?: string }> = { ...cachedProfiles };
     
-    if (profilesData) {
-      profilesData.forEach((profile: any) => {
-        const profileId = String(profile.id);
-        profileMap[profileId] = { name: profile.name };
+    try {
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, name')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) {
+        console.warn(`Profile not found for user ${userId}:`, profileError);
+        // Don't cache missing profiles to avoid repeated failed requests
+        profileMap[userId] = { name: undefined };
+      } else if (profileData) {
+        profileMap[userId] = { name: profileData.name };
         
         // Update cache
-        profileCache.set(profileId, {
-          name: profile.name,
+        profileCache.set(userId, {
+          name: profileData.name,
           timestamp: now
         });
-      });
+      }
+    } catch (error) {
+      console.error(`Error fetching profile for user ${userId}:`, error);
+      profileMap[userId] = { name: undefined };
     }
-
-    return profileMap;
-  } catch (error) {
-    console.error('Error fetching profiles:', error);
-    return cachedProfiles; // Return cached data on error
   }
+
+  return profileMap;
 }
 
 // Function to clear profile cache (useful for testing or manual refresh)
